@@ -261,6 +261,21 @@
   "technexRegistrations": [],
   "mediaItems": [
     {
+      "id": "media-1794863268432-zvv7",
+      "title": "TECHNEX 2K26 Official Payment QR",
+      "fileName": "s4ds-official-technex-qr.png",
+      "category": "payment-qr",
+      "folder": "payment/qr-codes",
+      "storagePath": "payment/qr-codes/1794863268060_s4ds-official-technex-qr.png",
+      "fileUrl": "https://cflqsjjkekfrnjjbhuja.supabase.co/storage/v1/object/public/s4ds-media/payment/qr-codes/1794863268060_s4ds-official-technex-qr.png",
+      "fileSize": 3885,
+      "mimeType": "image/png",
+      "isPrivate": false,
+      "isActive": false,
+      "associatedRecordId": null,
+      "createdAt": "2026-11-16T21:07:48.432Z"
+    },
+    {
       "id": "media-1794862449757-g1b7",
       "title": "TECHNEX 2K26 - Project Expo",
       "fileName": "TECHNEX 2K26 Project Expo Poster (2).png",

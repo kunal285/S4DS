@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getTechnexRegistrations, createTechnexRegistration, checkTechnexDuplicate } from "@/lib/db";
 import { validateAdminRequest } from "@/lib/auth";
+import { uploadToSupabase, getSignedUrl } from "@/lib/supabase";
 
 export async function GET(request) {
   try {
@@ -16,7 +17,23 @@ export async function GET(request) {
     const domain = searchParams.get("domain");
 
     const registrations = await getTechnexRegistrations({ search, status, membershipType, domain });
-    return NextResponse.json({ success: true, count: registrations.length, data: registrations });
+
+    // Refresh signed URLs for private payment screenshots so administrators can view them securely
+    const refreshed = await Promise.all(
+      registrations.map(async (reg) => {
+        if (reg.paymentScreenshotPath) {
+          try {
+            const freshSignedUrl = await getSignedUrl(reg.paymentScreenshotPath, 3600);
+            return { ...reg, paymentScreenshotUrl: freshSignedUrl };
+          } catch {
+            return reg;
+          }
+        }
+        return reg;
+      })
+    );
+
+    return NextResponse.json({ success: true, count: refreshed.length, data: refreshed });
   } catch (err) {
     return NextResponse.json({ error: "Failed to fetch TECHNEX registrations" }, { status: 500 });
   }
@@ -24,7 +41,45 @@ export async function GET(request) {
 
 export async function POST(request) {
   try {
-    const body = await request.json();
+    const contentType = request.headers.get("content-type") || "";
+    let data = {};
+    let screenshotFile = null;
+
+    if (contentType.includes("multipart/form-data")) {
+      const formData = await request.formData();
+      screenshotFile = formData.get("screenshot") || formData.get("paymentScreenshot") || formData.get("file");
+
+      let parsedMembers = [];
+      const rawMembers = formData.get("teamMembers");
+      if (rawMembers) {
+        try {
+          parsedMembers = typeof rawMembers === "string" ? JSON.parse(rawMembers) : rawMembers;
+        } catch {
+          parsedMembers = [];
+        }
+      }
+
+      data = {
+        membershipType: formData.get("membershipType"),
+        teamName: formData.get("teamName"),
+        projectTitle: formData.get("projectTitle"),
+        domain: formData.get("domain"),
+        abstractSummary: formData.get("abstractSummary"),
+        githubOrDriveUrl: formData.get("githubOrDriveUrl"),
+        leaderName: formData.get("leaderName"),
+        leaderEmail: formData.get("leaderEmail"),
+        leaderPhone: formData.get("leaderPhone"),
+        leaderCollege: formData.get("leaderCollege"),
+        leaderPrn: formData.get("leaderPrn"),
+        teamMembers: parsedMembers,
+        utr: formData.get("utr") || formData.get("upiTransactionId"),
+        paymentScreenshotUrl: formData.get("paymentScreenshotUrl") || "",
+        paymentScreenshotPath: formData.get("paymentScreenshotPath") || "",
+      };
+    } else {
+      data = await request.json();
+    }
+
     const {
       membershipType,
       teamName,
@@ -38,7 +93,8 @@ export async function POST(request) {
       leaderCollege,
       leaderPrn,
       teamMembers,
-    } = body;
+      utr,
+    } = data;
 
     // 0. Membership Tier & Server-Side Fee Verification (Security Enforcement)
     const VALID_MEMBERSHIP_TIERS = {
@@ -84,13 +140,50 @@ export async function POST(request) {
       return NextResponse.json({ error: "Leader PRN / Roll Number is required." }, { status: 400 });
     }
 
+    // 1. UPI Transaction ID / UTR Validation
+    const trimmedUtr = (utr || "").trim();
+    if (!trimmedUtr || trimmedUtr.length < 4) {
+      return NextResponse.json({ error: "Valid UPI Transaction ID / UTR is required." }, { status: 400 });
+    }
+
+    // 2. Payment Screenshot Validation & Supabase Storage Upload
+    let paymentScreenshotUrl = data.paymentScreenshotUrl || "";
+    let paymentScreenshotPath = data.paymentScreenshotPath || "";
+
+    if (screenshotFile && typeof screenshotFile !== "string") {
+      const allowedMimes = ["image/png", "image/jpeg", "image/jpg"];
+      if (!allowedMimes.includes(screenshotFile.type)) {
+        return NextResponse.json(
+          { error: "Payment screenshot must be a PNG, JPG, or JPEG image." },
+          { status: 400 }
+        );
+      }
+      const buffer = Buffer.from(await screenshotFile.arrayBuffer());
+      const uploadResult = await uploadToSupabase({
+        fileBuffer: buffer,
+        fileName: screenshotFile.name || "payment-proof.png",
+        mimeType: screenshotFile.type,
+        category: "payment-screenshot",
+        isPrivate: true,
+      });
+      paymentScreenshotUrl = uploadResult.fileUrl;
+      paymentScreenshotPath = uploadResult.storagePath;
+    }
+
+    if (!paymentScreenshotUrl && !paymentScreenshotPath) {
+      return NextResponse.json(
+        { error: "Payment screenshot proof is required." },
+        { status: 400 }
+      );
+    }
+
     // Duplicate prevention check
     const dupCheck = await checkTechnexDuplicate({ teamName, leaderEmail, leaderPrn });
     if (dupCheck.isDuplicate) {
       return NextResponse.json({ error: dupCheck.message, field: dupCheck.field }, { status: 409 });
     }
 
-    // Create registration with verified server-side fee (no payment proof required)
+    // Create registration in RushDB with verified server-side fee and payment proof
     const newReg = await createTechnexRegistration({
       membershipType,
       registrationFee: verifiedRegistrationFee,
@@ -105,6 +198,11 @@ export async function POST(request) {
       leaderCollege: leaderCollege.trim(),
       leaderPrn: leaderPrn.trim(),
       teamMembers: Array.isArray(teamMembers) ? teamMembers : [],
+      utr: trimmedUtr,
+      paymentScreenshotUrl,
+      paymentScreenshotPath,
+      registrationStatus: "Successfully Registered",
+      status: "Approved",
     });
 
     return NextResponse.json(

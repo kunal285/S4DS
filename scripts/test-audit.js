@@ -313,6 +313,8 @@ async function runAudit() {
     // ----------------------------------------------------
     // CHECK 9: TECHNEX 2K26 Registration Workflow & Membership Tiers
     // ----------------------------------------------------
+    // CHECK 9: TECHNEX 2K26 Registration Workflow (Payment Proof & Direct Submission)
+    // ----------------------------------------------------
     const technexData = {
       membershipType: "S4DS Member",
       registrationFee: 49,
@@ -325,6 +327,9 @@ async function runAudit() {
       leaderPhone: "9876543219",
       leaderCollege: "MIT Academy of Engineering, Pune",
       leaderPrn: `PRN_TNX_${testRunId}`,
+      utr: "431289567123",
+      paymentScreenshotUrl: "https://cflqsjjkekfrnjjbhuja.supabase.co/storage/v1/object/public/s4ds-media/payment/screenshots/test.png",
+      paymentScreenshotPath: "payment/screenshots/test.png",
       teamMembers: [
         { name: "Saurabh Patil", email: `saurabh.${testRunId}@mitaoe.ac.in`, phone: "9876543218", prn: `PRN_MBR_${testRunId}` },
       ],
@@ -339,7 +344,8 @@ async function runAudit() {
     const regCode = firstTechnexRes.data?.registrationCode;
     const isFee49 = firstTechnexRes.data?.data?.registrationFee === 49 && firstTechnexRes.data?.data?.membershipType === "S4DS Member";
     const initialStatusOk = firstTechnexRes.data?.data?.registrationStatus === "Successfully Registered";
-    record("TECHNEX Workflow: Submit S4DS Member team (Verified ₹49 fee & Successfully Registered)", firstTechnexRes.status === 201 && Boolean(regCode) && isFee49 && initialStatusOk);
+    const utrSaved = firstTechnexRes.data?.data?.utr === "431289567123";
+    record("TECHNEX Workflow: Submit S4DS Member team (Verified ₹49 fee, UTR & Direct Registration)", firstTechnexRes.status === 201 && Boolean(regCode) && isFee49 && initialStatusOk && utrSaved);
 
     // 2. Submit Non-S4DS Member team (₹99)
     const nonMemberTechnexRes = await fetchJson("/api/technex", {
@@ -352,12 +358,42 @@ async function runAudit() {
         teamName: `BetaInnovators_${testRunId}`,
         leaderEmail: `kunal.beta.${testRunId}@mitaoe.ac.in`,
         leaderPrn: `PRN_BETA_${testRunId}`,
+        utr: "987654321098",
       }),
     });
     const isFee99 = nonMemberTechnexRes.data?.data?.registrationFee === 99 && nonMemberTechnexRes.data?.data?.membershipType === "Non-S4DS Member";
     record("TECHNEX Workflow: Submit Non-S4DS Member team (Verified ₹99 fee)", nonMemberTechnexRes.status === 201 && isFee99);
 
-    // 3. Security test: Attempt fee tampering (send ₹1 for S4DS Member) -> Server must recalculate to ₹49
+    // 3. Validation: Reject submission without UTR
+    const missingUtrRes = await fetchJson("/api/technex", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        ...technexData,
+        teamName: `NoUtrTeam_${testRunId}`,
+        leaderEmail: `noutr.${testRunId}@mitaoe.ac.in`,
+        leaderPrn: `PRN_NOUTR_${testRunId}`,
+        utr: "",
+      }),
+    });
+    record("TECHNEX Validation: Reject missing UPI / UTR with HTTP 400", missingUtrRes.status === 400);
+
+    // 4. Validation: Reject submission without Payment Screenshot
+    const missingScreenshotRes = await fetchJson("/api/technex", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        ...technexData,
+        teamName: `NoProofTeam_${testRunId}`,
+        leaderEmail: `noproof.${testRunId}@mitaoe.ac.in`,
+        leaderPrn: `PRN_NOPROOF_${testRunId}`,
+        paymentScreenshotUrl: "",
+        paymentScreenshotPath: "",
+      }),
+    });
+    record("TECHNEX Validation: Reject missing payment screenshot with HTTP 400", missingScreenshotRes.status === 400);
+
+    // 5. Security test: Attempt fee tampering (send ₹1 for S4DS Member) -> Server must recalculate to ₹49
     const tamperFeeRes = await fetchJson("/api/technex", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -373,7 +409,7 @@ async function runAudit() {
     const feeRecalculated = tamperFeeRes.status === 201 && tamperFeeRes.data?.data?.registrationFee === 49;
     record("TECHNEX Security: Server recalculates tampered client fee to verified ₹49", feeRecalculated);
 
-    // 4. Validation: Reject invalid or missing membership category
+    // 6. Validation: Reject invalid or missing membership category
     const invalidCategoryRes = await fetchJson("/api/technex", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -431,6 +467,14 @@ async function runAudit() {
       record(
         "Admin Management: Filter TECHNEX registrations by membershipType",
         filterRes.status === 200 && Array.isArray(filterRes.data?.data)
+      );
+
+      // Verify admin list returns UTR and payment proof
+      const adminListRes = await fetchJson("/api/technex", { headers: authHeaders });
+      const foundReg = adminListRes.data?.data?.find((r) => r.id === createdTechId);
+      record(
+        "Admin Management: TECHNEX registrations include UTR and payment screenshot URL",
+        adminListRes.status === 200 && Boolean(foundReg?.utr) && Boolean(foundReg?.paymentScreenshotUrl)
       );
     }
 

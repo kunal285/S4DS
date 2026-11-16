@@ -139,6 +139,8 @@ export default function AdminRegistrationsPage() {
         "Domain / Track",
         "Membership Category",
         "Registration Fee (INR)",
+        "UPI / UTR Number",
+        "Payment Screenshot URL",
         "Leader Name",
         "Leader Email",
         "Leader Phone",
@@ -163,6 +165,8 @@ export default function AdminRegistrationsPage() {
           `"${(item.domain || "").replace(/"/g, '""')}"`,
           `"${item.membershipType || "Non-S4DS Member"}"`,
           item.registrationFee ?? 49,
+          `"${item.utr || item.upiTransactionId || ""}"`,
+          `"${item.paymentScreenshotUrl || ""}"`,
           `"${(item.leaderName || "").replace(/"/g, '""')}"`,
           `"${item.leaderEmail || ""}"`,
           `"${item.leaderPhone || ""}"`,
@@ -358,6 +362,8 @@ export default function AdminRegistrationsPage() {
                 <th className="px-4 py-3.5">Leader Coordinates</th>
                 <th className="px-4 py-3.5">Membership Category</th>
                 <th className="px-4 py-3.5">Registration Fee</th>
+                <th className="px-4 py-3.5">UPI / UTR</th>
+                <th className="px-4 py-3.5">Payment Proof</th>
                 <th className="px-4 py-3.5">Status</th>
                 <th className="px-5 py-3.5 text-right">Details</th>
               </tr>
@@ -396,6 +402,24 @@ export default function AdminRegistrationsPage() {
                     <span className="font-mono font-black text-brand-white text-sm">
                       ₹{item.registrationFee ?? (item.membershipType === "S4DS Member" ? 49 : 99)}
                     </span>
+                  </td>
+                  <td className="px-4 py-4 font-mono font-bold text-brand-yellow">
+                    {item.utr || item.upiTransactionId || "N/A"}
+                  </td>
+                  <td className="px-4 py-4">
+                    {item.paymentScreenshotUrl ? (
+                      <a
+                        href={item.paymentScreenshotUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-background-elevated hover:bg-[#302016] text-brand-orange hover:text-brand-yellow border border-brand-border text-[10px] font-semibold transition-colors"
+                        title="View Payment Screenshot"
+                      >
+                        <ExternalLink className="w-3 h-3" /> View Proof
+                      </a>
+                    ) : (
+                      <span className="text-[10px] text-brand-muted">None</span>
+                    )}
                   </td>
                   <td className="px-4 py-4">
                     <span
@@ -502,35 +526,50 @@ export default function AdminRegistrationsPage() {
             </div>
 
             {/* Quick Status Bar */}
-            <div className="p-4 rounded-xl bg-background-elevated border border-brand-border flex items-center justify-between">
-              <span className="text-xs text-brand-secondary">Approval Status:</span>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => handleStatusUpdate(selectedRecord.id, "Approved")}
-                  className="px-3.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-md transition-colors"
-                >
-                  Approve
-                </button>
-                <button
-                  onClick={() => handleStatusUpdate(selectedRecord.id, "Rejected")}
-                  className="px-3.5 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs shadow-md transition-colors"
-                >
-                  Reject
-                </button>
-                <button
-                  onClick={() => handleStatusUpdate(selectedRecord.id, "Pending")}
-                  className="px-3.5 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs shadow-md transition-colors"
-                >
-                  Pending
-                </button>
+            {tab === "membership" ? (
+              <div className="p-4 rounded-xl bg-background-elevated border border-brand-border flex items-center justify-between">
+                <span className="text-xs text-brand-secondary">Membership Approval Status:</span>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => handleStatusUpdate(selectedRecord.id, "Approved")}
+                    className="px-3.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-md transition-colors"
+                  >
+                    Approve
+                  </button>
+                  <button
+                    onClick={() => handleStatusUpdate(selectedRecord.id, "Rejected")}
+                    className="px-3.5 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs shadow-md transition-colors"
+                  >
+                    Reject
+                  </button>
+                  <button
+                    onClick={() => handleStatusUpdate(selectedRecord.id, "Pending")}
+                    className="px-3.5 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs shadow-md transition-colors"
+                  >
+                    Pending
+                  </button>
+                </div>
               </div>
-            </div>
+            ) : (
+              <div className="p-4 rounded-xl bg-background-elevated border border-brand-orange/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="flex items-center gap-2">
+                  <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
+                  <div>
+                    <span className="text-xs font-bold text-white block">Direct Registration Confirmed</span>
+                    <span className="text-[10px] text-brand-muted">Recorded in RushDB • No payment approval required</span>
+                  </div>
+                </div>
+                <span className="px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 w-fit">
+                  Successfully Registered
+                </span>
+              </div>
+            )}
 
             {/* Content Details */}
             {tab === "technex" ? (
               <div className="space-y-4 text-xs">
-                {/* Registration Code & Membership Fee Summary */}
-                <div className="grid grid-cols-2 gap-3 p-4 rounded-xl bg-background-elevated border border-brand-border text-brand-secondary">
+                {/* Registration Code, Fee & Submission Timestamp */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 p-4 rounded-xl bg-background-elevated border border-brand-border text-brand-secondary">
                   <div>
                     <span className="text-brand-muted block text-[10px] uppercase font-bold">Registration Code:</span>
                     <span className="text-brand-yellow font-black text-base font-mono">
@@ -543,6 +582,73 @@ export default function AdminRegistrationsPage() {
                       {selectedRecord.membershipType || "Non-S4DS Member"} (₹{selectedRecord.registrationFee ?? 49})
                     </span>
                   </div>
+                  <div>
+                    <span className="text-brand-muted block text-[10px] uppercase font-bold">Registered On:</span>
+                    <span className="text-brand-secondary text-xs">
+                      {selectedRecord.createdAt ? new Date(selectedRecord.createdAt).toLocaleString("en-IN") : "N/A"}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Payment Proof & Transaction Details */}
+                <div className="p-4 rounded-xl bg-background-elevated border border-brand-border space-y-3">
+                  <span className="font-bold text-brand-white block text-xs flex items-center gap-2">
+                    <ShieldCheck className="w-4 h-4 text-brand-orange" /> Payment Proof &amp; Transaction Details:
+                  </span>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                    <div className="p-3 rounded-lg bg-[#17110D] border border-brand-border space-y-1">
+                      <span className="text-[10px] uppercase font-bold text-brand-muted block">UPI Transaction ID / UTR:</span>
+                      <span className="font-mono font-bold text-brand-yellow text-sm block">
+                        {selectedRecord.utr || selectedRecord.upiTransactionId || "Not Provided"}
+                      </span>
+                    </div>
+
+                    <div className="p-3 rounded-lg bg-[#17110D] border border-brand-border space-y-1">
+                      <span className="text-[10px] uppercase font-bold text-brand-muted block">Fee Recorded:</span>
+                      <span className="font-mono font-bold text-white text-sm block">
+                        ₹{selectedRecord.registrationFee ?? (selectedRecord.membershipType === "S4DS Member" ? 49 : 99)} ({selectedRecord.membershipType})
+                      </span>
+                    </div>
+                  </div>
+
+                  {selectedRecord.paymentScreenshotUrl ? (
+                    <div className="space-y-2 pt-2 border-t border-brand-border">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[11px] font-bold text-brand-white">Payment Screenshot Proof:</span>
+                        <div className="flex items-center gap-2">
+                          <a
+                            href={selectedRecord.paymentScreenshotUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="px-2.5 py-1 rounded bg-[#17110D] hover:bg-[#251710] text-brand-orange hover:text-brand-yellow border border-brand-border text-[11px] font-bold flex items-center gap-1 transition-colors"
+                          >
+                            <ExternalLink className="w-3 h-3" /> View Full Image
+                          </a>
+                          <a
+                            href={selectedRecord.paymentScreenshotUrl}
+                            download={`technex-payment-${selectedRecord.registrationCode || selectedRecord.id}.png`}
+                            className="px-2.5 py-1 rounded bg-[#17110D] hover:bg-[#251710] text-brand-secondary hover:text-white border border-brand-border text-[11px] font-semibold flex items-center gap-1 transition-colors"
+                          >
+                            <Download className="w-3 h-3" /> Download
+                          </a>
+                        </div>
+                      </div>
+
+                      <div className="relative w-full h-64 rounded-xl overflow-hidden border border-brand-border bg-black/60">
+                        <Image
+                          src={selectedRecord.paymentScreenshotUrl}
+                          alt={`Payment proof for ${selectedRecord.teamName}`}
+                          fill
+                          className="object-contain"
+                        />
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="p-3 rounded-lg bg-[#17110D] border border-brand-border text-xs text-brand-muted">
+                      No payment screenshot attached for this record.
+                    </div>
+                  )}
                 </div>
 
                 <div className="p-4 rounded-xl bg-background-elevated border border-brand-border space-y-2">

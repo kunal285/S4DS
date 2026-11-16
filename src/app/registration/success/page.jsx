@@ -141,18 +141,18 @@ function SuccessContent() {
         </div>
 
         <h1 className="text-3xl sm:text-5xl font-black text-white tracking-tight leading-tight">
-          Registration Submitted <span className="brand-text-gradient">Successfully!</span>
+          Registration <span className="brand-text-gradient">Successful!</span>
         </h1>
 
         <p className="text-base sm:text-lg text-[#FFF1DF] max-w-2xl mx-auto leading-relaxed">
-          Thank you for registering for <strong className="text-brand-yellow font-bold">TECHNEX 2K26 – THE PROJECT EXPO</strong>. Your team entry has been recorded in the chapter database.
+          Your TECHNEX 2K26 registration has been submitted successfully. Thank you for being part of the event!
         </p>
 
-        {/* Status Confirmation Pill */}
+        {/* Confirmation Pill */}
         <div className="pt-2 flex justify-center">
           <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-500/15 border border-emerald-500/35 text-xs sm:text-sm font-extrabold text-emerald-300 shadow-lg">
             <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-            Registration Status: Successfully Registered
+            Registration Confirmed
           </span>
         </div>
       </div>
@@ -352,7 +352,7 @@ function SuccessContent() {
               href="/"
               className="px-5 py-2.5 rounded-xl bg-[#24170F] hover:bg-[#302016] text-[#FFF1DF] hover:text-white border border-[rgba(252,135,6,0.25)] text-xs font-bold flex items-center gap-2 transition-colors"
             >
-              <ArrowLeft className="w-4 h-4" /> Back to S4DS Website
+              <ArrowLeft className="w-4 h-4" /> Back to Homepage
             </Link>
             <Link
               href="/technex-2k26"

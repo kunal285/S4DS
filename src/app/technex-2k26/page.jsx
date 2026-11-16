@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import {
@@ -18,6 +18,9 @@ import {
   Zap,
   Users,
   ExternalLink,
+  CreditCard,
+  Copy,
+  Upload,
 } from "lucide-react";
 import Toast from "@/components/Toast";
 
@@ -54,8 +57,13 @@ export default function TechnexPage() {
     leaderCollege: "MIT Academy of Engineering, Pune",
     leaderPrn: "",
     teamMembers: [],
+    utr: "",
   });
 
+  const [screenshotFile, setScreenshotFile] = useState(null);
+  const [previewUrl, setPreviewUrl] = useState("");
+  const [qrCodeUrl, setQrCodeUrl] = useState("/images/payment-qr.png");
+  const [qrLoading, setQrLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [toast, setToast] = useState(null);
@@ -68,6 +76,24 @@ export default function TechnexPage() {
     "Cloud Architecture & DevOps",
     "Open Track: Interdisciplinary Innovation",
   ];
+
+  useEffect(() => {
+    fetchActiveQr();
+  }, []);
+
+  const fetchActiveQr = async () => {
+    try {
+      const res = await fetch("/api/media/active?category=payment-qr");
+      const json = await res.json();
+      if (json.success && json.data?.fileUrl) {
+        setQrCodeUrl(json.data.fileUrl);
+      }
+    } catch (err) {
+      console.warn("Using default QR fallback:", err);
+    } finally {
+      setQrLoading(false);
+    }
+  };
 
   const handleMembershipChange = (category) => {
     const fee = category === "S4DS Member" ? 49 : 99;
@@ -107,17 +133,45 @@ export default function TechnexPage() {
     });
   };
 
+  const handleFileChange = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const allowed = ["image/png", "image/jpeg", "image/jpg"];
+    if (!allowed.includes(file.type)) {
+      setErrorMessage("Please select a valid image file (PNG, JPG, or JPEG).");
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      setErrorMessage("Screenshot file size must be less than 10MB.");
+      return;
+    }
+
+    setErrorMessage("");
+    setScreenshotFile(file);
+    if (previewUrl) URL.revokeObjectURL(previewUrl);
+    setPreviewUrl(URL.createObjectURL(file));
+  };
+
+  const handleRemoveFile = () => {
+    if (previewUrl) URL.revokeObjectURL(previewUrl);
+    setScreenshotFile(null);
+    setPreviewUrl("");
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSubmitting(true);
     setErrorMessage("");
 
-    // Validation
+    // 1. Validate Membership
     if (!formData.membershipType || !["S4DS Member", "Non-S4DS Member"].includes(formData.membershipType)) {
       setErrorMessage("Please select a valid Membership Category (S4DS Member or Non-S4DS Member).");
       setSubmitting(false);
       return;
     }
+
+    // 2. Validate Team Details
     if (!formData.teamName || formData.teamName.trim().length < 2) {
       setErrorMessage("Please enter a valid Team Name.");
       setSubmitting(false);
@@ -149,11 +203,39 @@ export default function TechnexPage() {
       return;
     }
 
+    // 3. Validate Payment Fields
+    if (!formData.utr || formData.utr.trim().length < 4) {
+      setErrorMessage("Please enter a valid UPI Transaction ID / UTR.");
+      setSubmitting(false);
+      return;
+    }
+    if (!screenshotFile) {
+      setErrorMessage("Please upload your payment screenshot before submitting.");
+      setSubmitting(false);
+      return;
+    }
+
     try {
+      const payload = new FormData();
+      payload.append("membershipType", formData.membershipType);
+      payload.append("registrationFee", String(formData.registrationFee));
+      payload.append("teamName", formData.teamName.trim());
+      payload.append("projectTitle", formData.projectTitle.trim());
+      payload.append("domain", formData.domain.trim());
+      payload.append("abstractSummary", (formData.abstractSummary || "").trim());
+      payload.append("githubOrDriveUrl", (formData.githubOrDriveUrl || "").trim());
+      payload.append("leaderName", formData.leaderName.trim());
+      payload.append("leaderEmail", formData.leaderEmail.trim());
+      payload.append("leaderPhone", formData.leaderPhone.trim());
+      payload.append("leaderCollege", formData.leaderCollege.trim());
+      payload.append("leaderPrn", formData.leaderPrn.trim());
+      payload.append("teamMembers", JSON.stringify(formData.teamMembers));
+      payload.append("utr", formData.utr.trim());
+      payload.append("screenshot", screenshotFile);
+
       const res = await fetch("/api/technex", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+        body: payload,
       });
 
       const json = await res.json();
@@ -167,7 +249,7 @@ export default function TechnexPage() {
         setErrorMessage(json.error || "Failed to submit registration. Please verify details.");
       }
     } catch (err) {
-      setErrorMessage("Network error during submission.");
+      setErrorMessage("Network error during submission. Please try again.");
     } finally {
       setSubmitting(false);
     }
@@ -178,43 +260,39 @@ export default function TechnexPage() {
       {/* ── Banner Section ── */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
         <div className="lg:col-span-7 space-y-6">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-brand-orange/15 border border-brand-border text-xs font-bold text-brand-orange uppercase tracking-wider">
-            <Flame className="w-4 h-4 text-brand-yellow" /> Event
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-brand-orange/15 border border-brand-orange/30 text-xs font-bold text-brand-orange uppercase tracking-wider">
+            <Flame className="w-4 h-4 text-brand-yellow" /> Flagship Annual Project Expo
           </div>
 
           <h1 className="text-4xl sm:text-6xl font-black text-brand-white tracking-tight leading-tight">
-            TECHNEX 2K26 <br />
-            <span className="brand-text-gradient">
-              Project Innovation Expo
-            </span>
+            TECHNEX <span className="brand-text-gradient">2K26</span>
           </h1>
 
           <p className="text-base sm:text-lg text-brand-secondary leading-relaxed">
-            The annual benchmark exhibition for undergraduate engineering talent. Present your prototypes,
-            interact with venture mentors, demonstrate breakthrough research, and earn national recognition.
+            The marquee project innovation exhibition hosted by the Society for Data Science (S4DS) Student Chapter, MIT Academy of Engineering, Alandi, Pune. Present your breakthrough engineering solutions, AI/ML pipelines, and full-stack software architectures to industry juries.
           </p>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
-            <div className="p-4 rounded-xl bg-background-card border border-brand-border flex items-center gap-3">
-              <Calendar className="w-6 h-6 text-brand-yellow shrink-0" />
-              <div>
-                <span className="text-xs text-brand-muted block">Expo Date</span>
-                <span className="text-base font-bold text-brand-white">Nov 21, 2026</span>
-              </div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 pt-2">
+            <div className="p-4 rounded-2xl bg-background-card border border-brand-border space-y-1">
+              <Calendar className="w-5 h-5 text-brand-orange" />
+              <div className="text-xs text-brand-muted">Date</div>
+              <div className="text-sm font-bold text-brand-white">Nov 21, 2026</div>
             </div>
-            <div className="p-4 rounded-xl bg-background-card border border-brand-border flex items-center gap-3">
-              <MapPin className="w-6 h-6 text-brand-orange shrink-0" />
-              <div>
-                <span className="text-xs text-brand-muted block">Campus Venue</span>
-                <span className="text-base font-bold text-brand-white">MITAOE Pune</span>
-              </div>
+            <div className="p-4 rounded-2xl bg-background-card border border-brand-border space-y-1">
+              <MapPin className="w-5 h-5 text-brand-orange" />
+              <div className="text-xs text-brand-muted">Venue</div>
+              <div className="text-sm font-bold text-brand-white">MITAOE Campus</div>
+            </div>
+            <div className="p-4 rounded-2xl bg-background-card border border-brand-border space-y-1 col-span-2 sm:col-span-1">
+              <Clock className="w-5 h-5 text-brand-orange" />
+              <div className="text-xs text-brand-muted">Format</div>
+              <div className="text-sm font-bold text-brand-white">Offline Project Expo</div>
             </div>
           </div>
         </div>
 
-        {/* Poster Visual Card */}
-        <div className="lg:col-span-5">
-          <div className="relative rounded-3xl overflow-hidden border-2 border-brand-orange/40 shadow-2xl shadow-brand-red/10 aspect-[4/5] bg-background-card">
+        <div className="lg:col-span-5 flex justify-center">
+          <div className="relative w-full max-w-sm aspect-[4/5] rounded-3xl overflow-hidden border-2 border-brand-orange/30 shadow-2xl shadow-brand-red/20 bg-background-card">
             <Image
               src="/images/technex-poster.png"
               alt="TECHNEX 2K26 Official Expo Poster"
@@ -285,7 +363,7 @@ export default function TechnexPage() {
               Team Registration Portal
             </h2>
             <p className="text-sm text-brand-muted mt-1">
-              Teams can consist of 1 to 4 members. Select your membership category below to begin.
+              Teams can consist of 1 to 4 members. Complete your team information, submit payment details, and register directly below.
             </p>
           </div>
 
@@ -304,7 +382,7 @@ export default function TechnexPage() {
               </h3>
               <div className="flex items-center gap-2 text-xs">
                 <span className="text-brand-muted">Active Fee:</span>
-                <span className="px-2.5 py-1 rounded-lg bg-brand-orange/20 text-brand-yellow font-extrabold border border-brand-orange/40 text-sm">
+                <span className="px-2.5 py-1 rounded-lg bg-brand-orange/20 text-brand-yellow font-extrabold border border-brand-orange/40 text-sm font-mono">
                   ₹{formData.registrationFee} / Team
                 </span>
               </div>
@@ -325,44 +403,24 @@ export default function TechnexPage() {
                 }`}
               >
                 <div className="flex items-start justify-between gap-3">
-                  <div className="flex items-start gap-3">
-                    <div
-                      className={`w-5 h-5 mt-0.5 rounded-full border flex items-center justify-center transition-colors shrink-0 ${
-                        formData.membershipType === "S4DS Member"
-                          ? "border-brand-orange bg-brand-orange text-white"
-                          : "border-brand-muted/50 bg-background-card"
-                      }`}
-                    >
-                      {formData.membershipType === "S4DS Member" && (
-                        <div className="w-2 h-2 rounded-full bg-white" />
-                      )}
+                  <div className="space-y-1.5">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-extrabold text-brand-white">
+                        S4DS Member Team
+                      </span>
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-black uppercase bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
+                        Discounted
+                      </span>
                     </div>
-                    <div>
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="text-base font-bold text-brand-white">S4DS Member</span>
-                        <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-brand-orange/20 text-brand-yellow border border-brand-orange/40">
-                          Chapter Benefit
-                        </span>
-                      </div>
-                      <p className="text-xs text-brand-secondary mt-1.5 leading-relaxed">
-                        For enrolled student members of Society for Data Science (S4DS) MITAOE Chapter.
-                      </p>
-                    </div>
+                    <p className="text-xs text-brand-secondary leading-relaxed">
+                      At least one team member holds an active S4DS MITAOE Student Chapter membership.
+                    </p>
                   </div>
                   <div className="text-right shrink-0">
-                    <span className="text-2xl font-black text-brand-yellow">₹49</span>
-                    <span className="block text-[10px] uppercase font-bold text-brand-muted">Per Team</span>
+                    <span className="text-2xl font-black font-mono text-brand-yellow">₹49</span>
+                    <span className="text-[10px] text-brand-muted block">per team</span>
                   </div>
                 </div>
-
-                {formData.membershipType === "S4DS Member" && (
-                  <div className="mt-4 pt-3 border-t border-brand-orange/30 flex items-center justify-between text-xs text-emerald-400 font-semibold">
-                    <span className="flex items-center gap-1.5">
-                      <CheckCircle2 className="w-4 h-4 text-emerald-400" /> S4DS Member Selected
-                    </span>
-                    <span className="font-bold text-brand-white">Payable: ₹49</span>
-                  </div>
-                )}
               </div>
 
               {/* Option 2: Non-S4DS Member */}
@@ -375,63 +433,43 @@ export default function TechnexPage() {
                 }`}
               >
                 <div className="flex items-start justify-between gap-3">
-                  <div className="flex items-start gap-3">
-                    <div
-                      className={`w-5 h-5 mt-0.5 rounded-full border flex items-center justify-center transition-colors shrink-0 ${
-                        formData.membershipType === "Non-S4DS Member"
-                          ? "border-brand-orange bg-brand-orange text-white"
-                          : "border-brand-muted/50 bg-background-card"
-                      }`}
-                    >
-                      {formData.membershipType === "Non-S4DS Member" && (
-                        <div className="w-2 h-2 rounded-full bg-white" />
-                      )}
+                  <div className="space-y-1.5">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-extrabold text-brand-white">
+                        Non-S4DS Member Team
+                      </span>
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-black uppercase bg-brand-orange/20 text-brand-yellow border border-brand-orange/40">
+                        General
+                      </span>
                     </div>
-                    <div>
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="text-base font-bold text-brand-white">Non-S4DS Member</span>
-                        <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-background-secondary text-brand-secondary border border-brand-border">
-                          General Entry
-                        </span>
-                      </div>
-                      <p className="text-xs text-brand-secondary mt-1.5 leading-relaxed">
-                        Open to all college students, universities, external participants, and non-members.
-                      </p>
-                    </div>
+                    <p className="text-xs text-brand-secondary leading-relaxed">
+                      Open to all students from MITAOE and other accredited institutions across Maharashtra.
+                    </p>
                   </div>
                   <div className="text-right shrink-0">
-                    <span className="text-2xl font-black text-brand-yellow">₹99</span>
-                    <span className="block text-[10px] uppercase font-bold text-brand-muted">Per Team</span>
+                    <span className="text-2xl font-black font-mono text-brand-white">₹99</span>
+                    <span className="text-[10px] text-brand-muted block">per team</span>
                   </div>
                 </div>
-
-                {formData.membershipType === "Non-S4DS Member" && (
-                  <div className="mt-4 pt-3 border-t border-brand-orange/30 flex items-center justify-between text-xs text-brand-yellow font-semibold">
-                    <span className="flex items-center gap-1.5">
-                      <CheckCircle2 className="w-4 h-4 text-brand-yellow" /> Non-S4DS Member Selected
-                    </span>
-                    <span className="font-bold text-brand-white">Payable: ₹99</span>
-                  </div>
-                )}
               </div>
             </div>
           </div>
 
-          {/* ── SECTION 2: Project Details ── */}
-          <div className="pt-6 border-t border-brand-border space-y-5">
+          {/* ── SECTION 2: Team & Project Details ── */}
+          <div className="space-y-4 pt-4 border-t border-brand-border">
             <h3 className="text-base font-bold text-brand-orange uppercase tracking-wider flex items-center gap-2">
-              <Zap className="w-4 h-4 text-brand-yellow" /> 2. Project Specifications
+              <Zap className="w-4 h-4 text-brand-yellow" /> 2. Team &amp; Project Coordinates *
             </h3>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-              <div className="space-y-1.5 sm:col-span-2">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-1.5">
                 <label className="text-xs font-semibold uppercase tracking-wider text-brand-secondary">
                   Team Name *
                 </label>
                 <input
                   type="text"
                   required
-                  placeholder="e.g. NeuralKnights"
+                  placeholder="e.g. NeuralCoders"
                   value={formData.teamName}
                   onChange={(e) => setFormData({ ...formData, teamName: e.target.value })}
                   className="w-full px-4 py-2.5 rounded-xl bg-background-elevated border border-brand-border text-brand-white text-sm focus:outline-none focus:border-brand-orange"
@@ -440,55 +478,55 @@ export default function TechnexPage() {
 
               <div className="space-y-1.5">
                 <label className="text-xs font-semibold uppercase tracking-wider text-brand-secondary">
-                  Project Title *
-                </label>
-                <input
-                  type="text"
-                  required
-                  placeholder="e.g. Real-Time Forest Fire Detection via Drone Swarms"
-                  value={formData.projectTitle}
-                  onChange={(e) => setFormData({ ...formData, projectTitle: e.target.value })}
-                  className="w-full px-4 py-2.5 rounded-xl bg-background-elevated border border-brand-border text-brand-white text-sm focus:outline-none focus:border-brand-orange"
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-xs font-semibold uppercase tracking-wider text-brand-secondary">
-                  Competition Track / Domain *
+                  Project Domain / Track *
                 </label>
                 <select
                   value={formData.domain}
                   onChange={(e) => setFormData({ ...formData, domain: e.target.value })}
-                  className="w-full px-4 py-2.5 rounded-xl bg-background-elevated border border-brand-border text-brand-white text-sm focus:outline-none focus:border-brand-orange cursor-pointer"
+                  className="w-full px-4 py-2.5 rounded-xl bg-background-elevated border border-brand-border text-brand-white text-sm focus:outline-none focus:border-brand-orange"
                 >
                   {domains.map((d) => (
-                    <option key={d} value={d} className="bg-background-card text-brand-white">
+                    <option key={d} value={d}>
                       {d}
                     </option>
                   ))}
                 </select>
               </div>
 
-              <div className="space-y-1.5 sm:col-span-2">
+              <div className="space-y-1.5 md:col-span-2">
                 <label className="text-xs font-semibold uppercase tracking-wider text-brand-secondary">
-                  Project Abstract / Problem Statement
+                  Project Title *
                 </label>
-                <textarea
-                  rows={3}
-                  placeholder="Briefly describe what your prototype solves..."
-                  value={formData.abstractSummary}
-                  onChange={(e) => setFormData({ ...formData, abstractSummary: e.target.value })}
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. Autonomous Traffic Flow Optimization using Vision Transformers"
+                  value={formData.projectTitle}
+                  onChange={(e) => setFormData({ ...formData, projectTitle: e.target.value })}
                   className="w-full px-4 py-2.5 rounded-xl bg-background-elevated border border-brand-border text-brand-white text-sm focus:outline-none focus:border-brand-orange"
                 />
               </div>
 
-              <div className="space-y-1.5 sm:col-span-2">
+              <div className="space-y-1.5 md:col-span-2">
                 <label className="text-xs font-semibold uppercase tracking-wider text-brand-secondary">
-                  GitHub Repository / Drive Link (Optional)
+                  Project Abstract / Brief Summary
+                </label>
+                <textarea
+                  rows={3}
+                  placeholder="Briefly describe your problem statement, technical stack, architecture, and expected impact (100-250 words)..."
+                  value={formData.abstractSummary}
+                  onChange={(e) => setFormData({ ...formData, abstractSummary: e.target.value })}
+                  className="w-full px-4 py-2.5 rounded-xl bg-background-elevated border border-brand-border text-brand-white text-sm focus:outline-none focus:border-brand-orange resize-none"
+                />
+              </div>
+
+              <div className="space-y-1.5 md:col-span-2">
+                <label className="text-xs font-semibold uppercase tracking-wider text-brand-secondary">
+                  GitHub Repository / Google Drive Demo Link (Optional)
                 </label>
                 <input
                   type="url"
-                  placeholder="https://github.com/myteam/project"
+                  placeholder="https://github.com/username/project or drive link"
                   value={formData.githubOrDriveUrl}
                   onChange={(e) => setFormData({ ...formData, githubOrDriveUrl: e.target.value })}
                   className="w-full px-4 py-2.5 rounded-xl bg-background-elevated border border-brand-border text-brand-white text-sm focus:outline-none focus:border-brand-orange"
@@ -497,13 +535,13 @@ export default function TechnexPage() {
             </div>
           </div>
 
-          {/* ── SECTION 3: Team Leader ── */}
-          <div className="pt-6 border-t border-brand-border space-y-5">
-            <h3 className="text-base font-bold text-brand-orange uppercase tracking-wider">
-              3. Team Leader Coordinates
+          {/* ── SECTION 3: Team Leader Details ── */}
+          <div className="space-y-4 pt-4 border-t border-brand-border">
+            <h3 className="text-base font-bold text-brand-orange uppercase tracking-wider flex items-center gap-2">
+              <Users className="w-4 h-4 text-brand-yellow" /> 3. Team Leader Details *
             </h3>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
               <div className="space-y-1.5">
                 <label className="text-xs font-semibold uppercase tracking-wider text-brand-secondary">
                   Leader Full Name *
@@ -511,7 +549,7 @@ export default function TechnexPage() {
                 <input
                   type="text"
                   required
-                  placeholder="Leader name"
+                  placeholder="e.g. Aarav Sharma"
                   value={formData.leaderName}
                   onChange={(e) => setFormData({ ...formData, leaderName: e.target.value })}
                   className="w-full px-4 py-2.5 rounded-xl bg-background-elevated border border-brand-border text-brand-white text-sm focus:outline-none focus:border-brand-orange"
@@ -525,7 +563,7 @@ export default function TechnexPage() {
                 <input
                   type="email"
                   required
-                  placeholder="leader@mitaoe.ac.in"
+                  placeholder="aarav@mitaoe.ac.in"
                   value={formData.leaderEmail}
                   onChange={(e) => setFormData({ ...formData, leaderEmail: e.target.value })}
                   className="w-full px-4 py-2.5 rounded-xl bg-background-elevated border border-brand-border text-brand-white text-sm focus:outline-none focus:border-brand-orange"
@@ -539,30 +577,16 @@ export default function TechnexPage() {
                 <input
                   type="tel"
                   required
-                  placeholder="10-digit number"
+                  placeholder="9876543210"
                   value={formData.leaderPhone}
                   onChange={(e) => setFormData({ ...formData, leaderPhone: e.target.value })}
                   className="w-full px-4 py-2.5 rounded-xl bg-background-elevated border border-brand-border text-brand-white text-sm focus:outline-none focus:border-brand-orange"
                 />
               </div>
 
-              <div className="space-y-1.5">
-                <label className="text-xs font-semibold uppercase tracking-wider text-brand-secondary">
-                  Leader PRN / Student ID *
-                </label>
-                <input
-                  type="text"
-                  required
-                  placeholder="e.g. 202301040050"
-                  value={formData.leaderPrn}
-                  onChange={(e) => setFormData({ ...formData, leaderPrn: e.target.value })}
-                  className="w-full px-4 py-2.5 rounded-xl bg-background-elevated border border-brand-border text-brand-white text-sm focus:outline-none focus:border-brand-orange"
-                />
-              </div>
-
               <div className="space-y-1.5 sm:col-span-2">
                 <label className="text-xs font-semibold uppercase tracking-wider text-brand-secondary">
-                  College / Institution Name *
+                  College / Institute Name *
                 </label>
                 <input
                   type="text"
@@ -573,52 +597,67 @@ export default function TechnexPage() {
                   className="w-full px-4 py-2.5 rounded-xl bg-background-elevated border border-brand-border text-brand-white text-sm focus:outline-none focus:border-brand-orange"
                 />
               </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold uppercase tracking-wider text-brand-secondary">
+                  Leader PRN / Roll Number *
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. 2022BTECS001"
+                  value={formData.leaderPrn}
+                  onChange={(e) => setFormData({ ...formData, leaderPrn: e.target.value })}
+                  className="w-full px-4 py-2.5 rounded-xl bg-background-elevated border border-brand-border text-brand-white text-sm focus:outline-none focus:border-brand-orange"
+                />
+              </div>
             </div>
           </div>
 
-          {/* ── SECTION 4: Additional Team Members ── */}
-          <div className="pt-6 border-t border-brand-border space-y-4">
+          {/* ── SECTION 4: Team Members (Up to 3 Additional Members) ── */}
+          <div className="space-y-4 pt-4 border-t border-brand-border">
             <div className="flex items-center justify-between">
-              <h3 className="text-base font-bold text-brand-orange uppercase tracking-wider flex items-center gap-2">
-                <Users className="w-4 h-4 text-brand-yellow" /> 4. Additional Team Members ({formData.teamMembers.length} / 3)
-              </h3>
+              <div>
+                <h3 className="text-base font-bold text-brand-orange uppercase tracking-wider flex items-center gap-2">
+                  <Users className="w-4 h-4 text-brand-yellow" /> 4. Additional Team Members (Optional)
+                </h3>
+                <p className="text-xs text-brand-secondary mt-0.5">
+                  Teams can include 1 to 4 members total. You have added {formData.teamMembers.length} additional member(s).
+                </p>
+              </div>
+
               {formData.teamMembers.length < 3 && (
                 <button
                   type="button"
                   onClick={addMember}
-                  className="px-3.5 py-1.5 rounded-lg bg-background-elevated hover:bg-background-secondary text-xs font-bold text-brand-yellow flex items-center gap-1.5 border border-brand-border hover:border-brand-orange transition-colors"
+                  className="px-3 py-1.5 rounded-lg bg-background-elevated hover:bg-background-secondary border border-brand-border text-brand-white hover:text-brand-orange text-xs font-semibold flex items-center gap-1.5 transition-colors"
                 >
                   <Plus className="w-3.5 h-3.5" /> Add Member
                 </button>
               )}
             </div>
 
-            {formData.teamMembers.length === 0 ? (
-              <p className="text-xs text-brand-muted italic">
-                No additional members added. Participating as a solo team leader.
-              </p>
-            ) : (
-              <div className="space-y-4">
+            {formData.teamMembers.length > 0 && (
+              <div className="space-y-3">
                 {formData.teamMembers.map((member, idx) => (
                   <div
                     key={idx}
-                    className="p-4 rounded-2xl bg-background-elevated border border-brand-border space-y-4 relative"
+                    className="p-4 rounded-2xl bg-background-elevated border border-brand-border space-y-3"
                   >
-                    <div className="flex justify-between items-center">
-                      <span className="text-xs font-bold text-brand-orange">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-brand-white">
                         Member #{idx + 2}
                       </span>
                       <button
                         type="button"
                         onClick={() => removeMember(idx)}
-                        className="text-brand-muted hover:text-rose-400 p-1 transition-colors"
-                        title="Remove member"
+                        className="text-rose-400 hover:text-rose-300 text-xs font-semibold flex items-center gap-1"
                       >
-                        <Trash2 className="w-4 h-4" />
+                        <Trash2 className="w-3.5 h-3.5" /> Remove
                       </button>
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
                       <input
                         type="text"
                         placeholder="Member Full Name"
@@ -654,29 +693,206 @@ export default function TechnexPage() {
             )}
           </div>
 
-          {/* ── SECTION 5: Dynamic Registration Fee Summary & Submission ── */}
-          <div className="pt-6 border-t border-brand-border space-y-6">
-            <div className="flex items-center justify-between">
+          {/* ── SECTION 5: Online Payment Details & Proof Upload ── */}
+          <div className="pt-8 border-t border-brand-border space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
               <h3 className="text-base font-bold text-brand-orange uppercase tracking-wider flex items-center gap-2">
-                <ShieldCheck className="w-5 h-5 text-brand-yellow" /> 5. Registration Fee &amp; Confirmation
+                <CreditCard className="w-5 h-5 text-brand-yellow" /> 5. Payment Details &amp; Proof of Transaction *
               </h3>
+              <div className="flex items-center gap-2 text-xs">
+                <span className="text-brand-muted">Amount Payable:</span>
+                <span className="px-3 py-1 rounded-xl bg-brand-orange/20 text-brand-yellow font-extrabold border border-brand-orange/40 text-sm font-mono">
+                  ₹{formData.registrationFee}
+                </span>
+              </div>
+            </div>
+
+            <p className="text-xs text-brand-secondary">
+              Scan the official S4DS MITAOE chapter QR code below or transfer directly to our UPI ID. After completing your payment, enter your UPI Transaction ID (UTR) and upload the payment screenshot.
+            </p>
+
+            {/* QR Code & Instructions Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-6 p-6 rounded-2xl bg-background-elevated border border-brand-orange/30 shadow-lg">
+              {/* QR Image Box */}
+              <div className="md:col-span-5 flex flex-col items-center justify-center p-4 rounded-xl bg-[#17110D] border border-brand-border space-y-3">
+                <div className="relative w-48 h-48 rounded-xl overflow-hidden border-2 border-brand-orange/40 bg-white p-2 shadow-inner">
+                  {qrLoading ? (
+                    <div className="w-full h-full flex items-center justify-center text-xs text-brand-muted">
+                      Loading QR...
+                    </div>
+                  ) : (
+                    <Image
+                      src={qrCodeUrl}
+                      alt="TECHNEX 2K26 Official Payment QR Code"
+                      fill
+                      className="object-contain p-1"
+                      priority
+                    />
+                  )}
+                </div>
+                <div className="text-center space-y-1">
+                  <span className="text-[11px] font-bold text-brand-yellow uppercase tracking-wider block">
+                    Scan to Pay ₹{formData.registrationFee}
+                  </span>
+                  <span className="text-[10px] text-brand-muted block">
+                    Accepts Google Pay, PhonePe, Paytm &amp; all UPI apps
+                  </span>
+                </div>
+              </div>
+
+              {/* Instructions & UPI Details */}
+              <div className="md:col-span-7 flex flex-col justify-between space-y-4">
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between pb-2 border-b border-brand-border">
+                    <span className="text-xs font-bold text-brand-white">Official Chapter UPI ID:</span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        navigator.clipboard.writeText("9172106568@airtel");
+                        setToast({ type: "success", message: "UPI ID copied to clipboard!" });
+                      }}
+                      className="px-2.5 py-1 rounded-lg bg-background-card hover:bg-[#302016] text-brand-orange hover:text-brand-yellow border border-brand-border text-[11px] font-bold flex items-center gap-1 transition-colors"
+                    >
+                      <Copy className="w-3 h-3" /> 9172106568@airtel
+                    </button>
+                  </div>
+
+                  <div className="space-y-2 text-xs text-brand-secondary">
+                    <div className="flex items-start gap-2">
+                      <span className="w-4 h-4 rounded-full bg-brand-orange/20 text-brand-orange text-[10px] font-bold flex items-center justify-center shrink-0 mt-0.5">1</span>
+                      <span>Scan the official QR code using Google Pay, PhonePe, Paytm, or BHIM.</span>
+                    </div>
+                    <div className="flex items-start gap-2">
+                      <span className="w-4 h-4 rounded-full bg-brand-orange/20 text-brand-orange text-[10px] font-bold flex items-center justify-center shrink-0 mt-0.5">2</span>
+                      <span>Pay the exact fee of <strong className="text-brand-yellow font-mono">₹{formData.registrationFee}</strong> for your team (<span className="text-brand-white font-semibold">{formData.membershipType}</span>).</span>
+                    </div>
+                    <div className="flex items-start gap-2">
+                      <span className="w-4 h-4 rounded-full bg-brand-orange/20 text-brand-orange text-[10px] font-bold flex items-center justify-center shrink-0 mt-0.5">3</span>
+                      <span>Note down your 12-digit UPI Reference Number / UTR.</span>
+                    </div>
+                    <div className="flex items-start gap-2">
+                      <span className="w-4 h-4 rounded-full bg-brand-orange/20 text-brand-orange text-[10px] font-bold flex items-center justify-center shrink-0 mt-0.5">4</span>
+                      <span>Capture a clear screenshot of the transaction receipt and upload it below.</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Amount Highlight */}
+                <div className="p-3 rounded-xl bg-[#17110D] border border-brand-orange/40 flex items-center justify-between">
+                  <div>
+                    <span className="text-[10px] uppercase font-bold text-brand-muted block">Payable Amount</span>
+                    <span className="text-xs text-brand-white font-semibold">{formData.membershipType}</span>
+                  </div>
+                  <span className="text-2xl font-black font-mono text-brand-yellow">₹{formData.registrationFee}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Input Field A: UPI Transaction ID / UTR */}
+            <div className="space-y-2">
+              <label className="text-xs font-bold uppercase tracking-wider text-[#FFF1DF] flex items-center justify-between">
+                <span>A. UPI Transaction ID / UTR *</span>
+                <span className="text-[10px] text-brand-muted normal-case font-normal">Found in your payment app receipt</span>
+              </label>
+              <input
+                type="text"
+                required
+                placeholder="e.g. 431289567123 or UPI Ref No."
+                value={formData.utr}
+                onChange={(e) => setFormData({ ...formData, utr: e.target.value })}
+                className="w-full px-4 py-3 rounded-xl bg-[#17110D] border border-[rgba(252,135,6,0.25)] text-white placeholder-[#B8A99A] text-sm focus:outline-none focus:border-[#FC8706] focus:ring-1 focus:ring-[rgba(252,135,6,0.20)] font-mono"
+              />
+            </div>
+
+            {/* Input Field B: Payment Screenshot Upload */}
+            <div className="space-y-2">
+              <label className="text-xs font-bold uppercase tracking-wider text-[#FFF1DF] flex items-center justify-between">
+                <span>B. Payment Screenshot Proof *</span>
+                <span className="text-[10px] text-brand-muted normal-case font-normal">PNG, JPG or JPEG (Max 10MB)</span>
+              </label>
+
+              {!previewUrl ? (
+                <label className="flex flex-col items-center justify-center w-full h-36 px-4 transition-all bg-[#17110D] border-2 border-dashed border-[rgba(252,135,6,0.30)] hover:border-[#FC8706] rounded-2xl cursor-pointer group hover:bg-[#201610]">
+                  <div className="flex flex-col items-center justify-center space-y-2">
+                    <div className="w-10 h-10 rounded-full bg-brand-orange/15 flex items-center justify-center text-brand-orange group-hover:scale-110 transition-transform">
+                      <Upload className="w-5 h-5 text-brand-yellow" />
+                    </div>
+                    <div className="text-center">
+                      <span className="text-xs font-bold text-white group-hover:text-brand-yellow transition-colors block">
+                        Click or drag to upload payment screenshot
+                      </span>
+                      <span className="text-[10px] text-[#B8A99A] block mt-0.5">
+                        Accepts PNG, JPG or JPEG up to 10MB
+                      </span>
+                    </div>
+                  </div>
+                  <input
+                    type="file"
+                    accept="image/png,image/jpeg,image/jpg"
+                    onChange={handleFileChange}
+                    className="hidden"
+                  />
+                </label>
+              ) : (
+                <div className="p-4 rounded-2xl bg-[#17110D] border border-[#25D366]/40 flex items-center justify-between gap-4 shadow-lg">
+                  <div className="flex items-center gap-3 overflow-hidden">
+                    <div className="relative w-16 h-16 rounded-xl overflow-hidden border border-brand-border bg-black/40 shrink-0">
+                      <Image
+                        src={previewUrl}
+                        alt="Payment screenshot preview"
+                        fill
+                        className="object-cover"
+                      />
+                    </div>
+                    <div className="overflow-hidden">
+                      <span className="text-xs font-bold text-white truncate block flex items-center gap-1.5">
+                        <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                        {screenshotFile?.name || "Payment Screenshot"}
+                      </span>
+                      <span className="text-[10px] text-brand-muted block mt-0.5">
+                        {(screenshotFile?.size ? (screenshotFile.size / 1024).toFixed(1) + " KB" : "")} • Ready for direct upload
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2 shrink-0">
+                    <label className="px-3 py-1.5 rounded-lg bg-background-elevated hover:bg-[#302016] text-xs font-semibold text-brand-secondary hover:text-white border border-brand-border cursor-pointer transition-colors">
+                      Change
+                      <input
+                        type="file"
+                        accept="image/png,image/jpeg,image/jpg"
+                        onChange={handleFileChange}
+                        className="hidden"
+                      />
+                    </label>
+                    <button
+                      type="button"
+                      onClick={handleRemoveFile}
+                      className="p-1.5 rounded-lg bg-rose-500/15 hover:bg-rose-500/25 text-rose-300 border border-rose-500/30 transition-colors"
+                      title="Remove selected file"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Dynamic Registration Fee Summary Card */}
             <div className="p-6 rounded-2xl bg-background-elevated border border-brand-orange/30 space-y-4 shadow-lg">
               <div className="flex items-center justify-between pb-3 border-b border-brand-border">
                 <span className="text-xs font-bold text-brand-muted uppercase tracking-wider">
-                  Registration Fee Summary
+                  Registration Summary
                 </span>
                 <span className="px-2.5 py-1 rounded-lg text-xs font-bold bg-brand-orange/20 text-brand-yellow border border-brand-orange/30">
                   {formData.membershipType}
                 </span>
               </div>
-              <div className="space-y-2.5 text-xs text-brand-secondary">
+              <div className="space-y-2 text-xs text-brand-secondary">
                 <div className="flex justify-between items-center">
-                  <span>Selected Membership Tier:</span>
+                  <span>Selected Category:</span>
                   <span className="font-semibold text-brand-white">
-                    {formData.membershipType === "S4DS Member" ? "S4DS Student Chapter Member (₹49)" : "Non-S4DS General Participant (₹99)"}
+                    {formData.membershipType === "S4DS Member" ? "S4DS Student Chapter Member" : "Non-S4DS General Participant"}
                   </span>
                 </div>
                 <div className="flex justify-between items-center">
@@ -686,7 +902,7 @@ export default function TechnexPage() {
                   </span>
                 </div>
                 <div className="flex justify-between items-center pt-3 border-t border-brand-border text-sm font-bold text-brand-white">
-                  <span>Applicable Registration Fee:</span>
+                  <span>Total Amount Paid:</span>
                   <span className="text-brand-yellow text-3xl font-black font-mono">
                     ₹{formData.registrationFee}
                   </span>
@@ -700,7 +916,7 @@ export default function TechnexPage() {
             disabled={submitting}
             className="w-full py-4 rounded-xl brand-btn text-white font-extrabold text-base transition-transform hover:scale-[1.01] shadow-xl shadow-brand-red/30 flex items-center justify-center gap-2 disabled:opacity-50"
           >
-            {submitting ? "Submitting Registration..." : `Complete TECHNEX 2K26 Registration (${formData.membershipType}: ₹${formData.registrationFee})`}
+            {submitting ? "Submitting Registration..." : "SUBMIT REGISTRATION"}
           </button>
         </form>
       </div>
