@@ -55,7 +55,7 @@ export default function Navbar() {
           {/* Desktop Navigation */}
           <nav className="hidden lg:flex items-center gap-1">
             {navItems.map((item) => {
-              const active = item.isLive && isActive(item.href);
+              const active = isActive(item.href);
 
               if (item.isLive) {
                 return (
@@ -78,18 +78,23 @@ export default function Navbar() {
                 );
               }
 
-              // Non-live items: Show as Coming Soon, disable direct navigation
+              // Under development items: Clickable link opening development preview
               return (
-                <div
+                <Link
                   key={item.name}
-                  className="relative px-3 py-2 text-xs font-semibold rounded-lg text-brand-muted/70 flex items-center gap-1.5 cursor-not-allowed select-none group"
-                  title={`${item.name} is currently under development`}
+                  href={item.href}
+                  className={`relative px-3 py-2 text-xs font-semibold rounded-lg transition-all duration-150 flex items-center gap-1.5 ${
+                    active
+                      ? "text-brand-yellow bg-brand-orange/20 border border-brand-orange/40"
+                      : "text-brand-secondary/80 hover:text-white hover:bg-background-elevated"
+                  }`}
+                  title={`${item.name} is currently under development (Preview)`}
                 >
                   <span>{item.name}</span>
-                  <span className="px-1.5 py-0.2 rounded text-[8px] font-extrabold uppercase bg-background-elevated text-brand-muted border border-brand-border/60">
+                  <span className="px-1.5 py-0.5 rounded text-[8px] font-extrabold uppercase bg-brand-orange/15 text-brand-orange border border-brand-orange/30">
                     Soon
                   </span>
-                </div>
+                </Link>
               );
             })}
           </nav>
@@ -151,18 +156,24 @@ export default function Navbar() {
               }
 
               return (
-                <div
+                <Link
                   key={item.name}
-                  className="px-4 py-3 rounded-xl text-sm font-semibold flex items-center justify-between text-brand-muted/70 bg-background-card/40 border border-brand-border/40 cursor-not-allowed select-none"
+                  href={item.href}
+                  onClick={() => setIsOpen(false)}
+                  className={`px-4 py-3 rounded-xl text-sm font-semibold flex items-center justify-between transition-colors ${
+                    active
+                      ? "text-brand-yellow bg-brand-orange/20 border border-brand-orange/40"
+                      : "text-brand-secondary hover:text-white hover:bg-background-elevated"
+                  }`}
                 >
                   <span className="flex items-center gap-2">
                     {item.name}
-                    <span className="px-1.5 py-0.5 text-[8px] font-extrabold uppercase rounded bg-background-elevated text-brand-muted border border-brand-border">
-                      Coming Soon
+                    <span className="px-1.5 py-0.5 text-[8px] font-extrabold uppercase rounded bg-brand-orange/15 text-brand-orange border border-brand-orange/30">
+                      Soon
                     </span>
                   </span>
-                  <Lock className="w-3.5 h-3.5 text-brand-muted/50" />
-                </div>
+                  <ChevronRight className="w-4 h-4 text-brand-muted" />
+                </Link>
               );
             })}
           </div>

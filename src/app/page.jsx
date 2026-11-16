@@ -199,49 +199,55 @@ export default function HomePage() {
                 tag: "Coming Soon",
                 desc: "Hands-on masterclasses in Generative AI, PyTorch, BigQuery, and full-stack data apps.",
                 icon: Database,
+                href: "/events",
               },
               {
                 title: "Executive Team & Faculty",
                 tag: "Coming Soon",
                 desc: "Meet our student core team, faculty mentors, and advisory board driving chapter initiatives.",
                 icon: Users,
+                href: "/team",
               },
               {
                 title: "Annual Event Gallery",
                 tag: "Coming Soon",
                 desc: "Curated high-resolution archives of campus exhibitions, speaker sessions, and project showcases.",
                 icon: Layers,
+                href: "/gallery",
               },
               {
                 title: "Chapter Membership Hub",
                 tag: "Coming Soon",
                 desc: "Exclusive member benefits, discount passes, community discord, and technical certification track.",
                 icon: Sparkles,
+                href: "/membership",
               },
             ].map((card, idx) => {
               const Icon = card.icon;
               return (
-                <div
+                <Link
                   key={idx}
-                  className="p-6 rounded-2xl bg-background-card border border-brand-border space-y-3 text-left relative overflow-hidden group hover:border-brand-orange/50 transition-colors shadow-lg"
+                  href={card.href}
+                  className="p-6 rounded-2xl bg-background-card border border-brand-border space-y-3 text-left relative overflow-hidden group hover:border-brand-orange/50 transition-all duration-200 shadow-lg block hover:-translate-y-1 hover:shadow-brand-orange/10"
                 >
                   <div className="flex items-center justify-between">
-                    <div className="w-10 h-10 rounded-xl bg-background-elevated border border-brand-border flex items-center justify-center text-brand-orange">
+                    <div className="w-10 h-10 rounded-xl bg-background-elevated border border-brand-border flex items-center justify-center text-brand-orange group-hover:border-brand-orange/40 transition-colors">
                       <Icon className="w-5 h-5" />
                     </div>
-                    <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-brand-orange/15 text-brand-yellow border border-brand-orange/30 uppercase tracking-wider">
+                    <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-brand-orange/15 text-brand-yellow border border-brand-orange/30 uppercase tracking-wider group-hover:bg-brand-orange/25 transition-colors">
                       {card.tag}
                     </span>
                   </div>
 
-                  <h4 className="text-base font-bold text-white group-hover:text-brand-yellow transition-colors">
-                    {card.title}
+                  <h4 className="text-base font-bold text-white group-hover:text-brand-yellow transition-colors flex items-center justify-between">
+                    <span>{card.title}</span>
+                    <ArrowRight className="w-4 h-4 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all text-brand-orange" />
                   </h4>
 
                   <p className="text-xs text-brand-muted leading-relaxed">
                     {card.desc}
                   </p>
-                </div>
+                </Link>
               );
             })}
           </div>
