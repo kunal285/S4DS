@@ -4,8 +4,18 @@ export default function robots() {
     rules: [
       {
         userAgent: "*",
-        allow: "/",
-        disallow: ["/admin/", "/api/"],
+        allow: ["/", "/technex-2k26", "/contact"],
+        disallow: [
+          "/admin/",
+          "/api/",
+          "/about",
+          "/events",
+          "/projects",
+          "/team",
+          "/gallery",
+          "/membership",
+          "/join",
+        ],
       },
     ],
     sitemap: `${baseUrl}/sitemap.xml`,

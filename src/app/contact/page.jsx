@@ -1,8 +1,26 @@
 "use client";
 
 import { useState } from "react";
-import { Mail, MapPin, Phone, Send, CheckCircle2, MessageSquare } from "lucide-react";
+import { Mail, MapPin, Phone, Send, CheckCircle2, MessageSquare, ExternalLink } from "lucide-react";
 import Toast from "@/components/Toast";
+
+function WhatsAppIcon({ className = "w-4 h-4" }) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="currentColor"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <path d="M17.472 14.382c-.301-.15-1.78-.878-2.056-.978-.276-.1-.476-.15-.676.15-.2.301-.776.978-.952 1.179-.175.2-.351.225-.652.075-.301-.15-1.27-.468-2.42-1.493-.895-.798-1.5-1.784-1.675-2.085-.176-.301-.019-.464.132-.614.136-.135.301-.351.451-.527.151-.175.201-.3.301-.501.1-.2.05-.376-.025-.526-.075-.15-.676-1.63-.927-2.232-.244-.587-.492-.507-.676-.516l-.576-.01c-.2 0-.526.075-.802.376s-1.053 1.028-1.053 2.508c0 1.48 1.078 2.909 1.229 3.109.15.2 2.122 3.24 5.141 4.544.718.31 1.279.496 1.716.634.721.23 1.378.197 1.897.12.578-.087 1.78-.727 2.03-1.429.251-.702.251-1.303.176-1.429-.076-.125-.276-.2-.577-.35z" />
+      <path
+        fillRule="evenodd"
+        clipRule="evenodd"
+        d="M12 2C6.477 2 2 6.477 2 12c0 1.89.525 3.66 1.438 5.168L2.05 21.95a.5.5 0 0 0 .61.61l4.83-1.385A9.957 9.957 0 0 0 12 22c5.523 0 10-4.477 10-10S17.523 2 12 2zm0 18.2a8.17 8.17 0 0 1-4.223-1.168.5.5 0 0 0-.411-.047l-3.376.968.974-3.356a.5.5 0 0 0-.05-.418A8.17 8.17 0 0 1 3.8 12c0-4.529 3.671-8.2 8.2-8.2 4.529 0 8.2 3.671 8.2 8.2 0 4.529-3.671 8.2-8.2 8.2z"
+      />
+    </svg>
+  );
+}
 
 export default function ContactPage() {
   const [formData, setFormData] = useState({
@@ -65,11 +83,19 @@ export default function ContactPage() {
                   Prof. Aparna Kulkarni ({process.env.NEXT_PUBLIC_CHAPTER_PHONE || "+91 (020) 3025 3500"})
                 </div>
               </div>
-            </div>
 
-            <div className="p-4 rounded-2xl bg-background-elevated border border-brand-border space-y-2 text-xs text-brand-muted">
-              <strong className="text-brand-secondary block">Student Help Desk:</strong>
-              Available Monday through Saturday, 9:00 AM to 5:00 PM IST in the Department of Computer Science and Engineering (Data Science).
+              <div className="pt-2 border-t border-brand-border/60">
+                <a
+                  href="https://chat.whatsapp.com/KFYW22NYGasBag1RZjnKJl"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full py-3 px-4 rounded-xl bg-[#25D366]/15 hover:bg-[#25D366]/25 border border-[#25D366]/40 text-[#25D366] text-xs font-bold flex items-center justify-center gap-2 transition-colors shadow-md"
+                >
+                  <WhatsAppIcon className="w-4 h-4 fill-current" />
+                  Join Official TECHNEX 2K26 WhatsApp Group
+                  <ExternalLink className="w-3.5 h-3.5" />
+                </a>
+              </div>
             </div>
           </div>
         </div>

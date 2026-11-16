@@ -4,7 +4,16 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
-  serverExternalPackages: ["mongoose", "bcryptjs"],
+  serverExternalPackages: ["bcryptjs"],
+  async redirects() {
+    return [
+      {
+        source: "/technex",
+        destination: "/technex-2k26",
+        permanent: true,
+      },
+    ];
+  },
 };
 
 export default nextConfig;

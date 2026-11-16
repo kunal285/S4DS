@@ -2,11 +2,17 @@
 
 import { useState, useEffect } from "react";
 import Image from "next/image";
+import { isRouteLive } from "@/config/site-mode";
+import UnderDevelopment from "@/components/UnderDevelopment";
 import { Image as ImageIcon, Calendar, X, ZoomIn } from "lucide-react";
 import LoadingSkeleton from "@/components/LoadingSkeleton";
 import EmptyState from "@/components/EmptyState";
 
 export default function GalleryPage() {
+  if (!isRouteLive("/gallery")) {
+    return <UnderDevelopment section="Event Gallery" />;
+  }
+
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");

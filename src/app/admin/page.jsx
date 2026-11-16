@@ -14,6 +14,8 @@ import {
   CheckCircle2,
   AlertCircle,
   Sparkles,
+  Settings,
+  FolderOpen,
 } from "lucide-react";
 import LoadingSkeleton from "@/components/LoadingSkeleton";
 
@@ -75,13 +77,13 @@ export default function AdminOverviewPage() {
       href: "/admin/events",
     },
     {
-      title: "Active Projects",
-      value: stats?.totalProjects || 0,
-      sub: "Showcased on site",
-      icon: Code2,
-      color: "text-brand-yellow",
-      border: "hover:border-brand-yellow",
-      href: "/admin/projects",
+      title: "Media Assets",
+      value: stats?.totalMedia || 0,
+      sub: "Supabase & RushDB",
+      icon: FolderOpen,
+      color: "text-brand-orange",
+      border: "hover:border-brand-orange",
+      href: "/admin/media",
     },
   ];
 
@@ -181,14 +183,14 @@ export default function AdminOverviewPage() {
           </Link>
 
           <Link
-            href="/admin/projects"
+            href="/admin/settings"
             className="p-4 rounded-2xl bg-background-elevated border border-brand-border hover:border-brand-orange transition-colors flex items-center justify-between group"
           >
             <div>
               <span className="text-sm font-bold text-brand-white group-hover:text-brand-orange transition-colors block">
-                Feature a Project
+                TECHNEX &amp; Site Settings
               </span>
-              <span className="text-xs text-brand-muted">Add student repositories</span>
+              <span className="text-xs text-brand-muted">WhatsApp group &amp; chapter links</span>
             </div>
             <ArrowRight className="w-4 h-4 text-brand-yellow group-hover:translate-x-1 transition-transform" />
           </Link>

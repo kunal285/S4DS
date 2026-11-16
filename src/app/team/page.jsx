@@ -2,11 +2,17 @@
 
 import { useState, useEffect } from "react";
 import Image from "next/image";
+import { isRouteLive } from "@/config/site-mode";
+import UnderDevelopment from "@/components/UnderDevelopment";
 import { Linkedin, Github, Users, Mail, GraduationCap } from "lucide-react";
 import LoadingSkeleton from "@/components/LoadingSkeleton";
 import EmptyState from "@/components/EmptyState";
 
 export default function TeamPage() {
+  if (!isRouteLive("/team")) {
+    return <UnderDevelopment section="Core Team & Faculty" />;
+  }
+
   const [team, setTeam] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");

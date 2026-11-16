@@ -1,6 +1,8 @@
 "use client";
 
 import Link from "next/link";
+import { isRouteLive } from "@/config/site-mode";
+import UnderDevelopment from "@/components/UnderDevelopment";
 import {
   Users,
   CheckCircle2,
@@ -19,6 +21,10 @@ import {
 } from "lucide-react";
 
 export default function MembershipPage() {
+  if (!isRouteLive("/membership")) {
+    return <UnderDevelopment section="Membership Portal" />;
+  }
+
   const benefits = [
     "Official S4DS National Student Member Certificate & Membership Kit",
     "Priority access & discounted entry to TECHNEX 2K26 Project Expo",

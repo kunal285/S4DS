@@ -1,5 +1,6 @@
 import fs from "fs";
 import path from "path";
+import crypto from "crypto";
 import bcrypt from "bcryptjs";
 import {
   isRushDBConnected,
@@ -270,6 +271,8 @@ const getInitialSeedData = () => {
     settings: {
       activePaymentQrId: null,
       activeBannerId: null,
+      technexWhatsappUrl: process.env.NEXT_PUBLIC_TECHNEX_WHATSAPP_URL || "https://chat.whatsapp.com/KFYW22NYGasBag1RZjnKJl",
+      technexWhatsappEnabled: true,
     },
   };
 };
@@ -982,13 +985,14 @@ export async function deleteMembership(id) {
 // ─────────────────────────────────────────────
 // TECHNEX 2K26 REGISTRATIONS
 // ─────────────────────────────────────────────
-export async function getTechnexRegistrations({ search, status, paymentStatus, domain } = {}) {
+export async function getTechnexRegistrations({ search, status, membershipType, domain, paymentStatus } = {}) {
   try {
     if (await isRushDBConnected()) {
       const catalog = await getSchemaCatalog();
       if (catalog.labels.has("TECHNEX_REGISTRATION")) {
         const where = {};
         if (status && status !== "All") where.status = status;
+        if (membershipType && membershipType !== "All") where.membershipType = membershipType;
         if (paymentStatus && paymentStatus !== "All") where.paymentStatus = paymentStatus;
         if (domain && domain !== "All") where.domain = domain;
         let list = await findRecords("TECHNEX_REGISTRATION", { where });
@@ -996,12 +1000,13 @@ export async function getTechnexRegistrations({ search, status, paymentStatus, d
           const s = search.toLowerCase();
           list = list.filter(
             (r) =>
+              r.id?.toLowerCase().includes(s) ||
+              r.registrationCode?.toLowerCase().includes(s) ||
               r.teamName?.toLowerCase().includes(s) ||
               r.projectTitle?.toLowerCase().includes(s) ||
               r.leaderName?.toLowerCase().includes(s) ||
               r.leaderEmail?.toLowerCase().includes(s) ||
-              r.leaderPrn?.toLowerCase().includes(s) ||
-              (r.transactionId && r.transactionId.toLowerCase().includes(s))
+              r.leaderPrn?.toLowerCase().includes(s)
           );
         }
         return list.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
@@ -1017,6 +1022,9 @@ export async function getTechnexRegistrations({ search, status, paymentStatus, d
   if (status && status !== "All") {
     list = list.filter((r) => r.status && r.status.toLowerCase() === status.toLowerCase());
   }
+  if (membershipType && membershipType !== "All") {
+    list = list.filter((r) => r.membershipType && r.membershipType.toLowerCase() === membershipType.toLowerCase());
+  }
   if (paymentStatus && paymentStatus !== "All") {
     list = list.filter((r) => r.paymentStatus && r.paymentStatus.toLowerCase() === paymentStatus.toLowerCase());
   }
@@ -1027,18 +1035,19 @@ export async function getTechnexRegistrations({ search, status, paymentStatus, d
     const s = search.toLowerCase();
     list = list.filter(
       (r) =>
-        r.teamName.toLowerCase().includes(s) ||
-        r.projectTitle.toLowerCase().includes(s) ||
-        r.leaderName.toLowerCase().includes(s) ||
-        r.leaderEmail.toLowerCase().includes(s) ||
-        r.leaderPrn.toLowerCase().includes(s) ||
-        (r.transactionId && r.transactionId.toLowerCase().includes(s))
+        r.id?.toLowerCase().includes(s) ||
+        r.registrationCode?.toLowerCase().includes(s) ||
+        r.teamName?.toLowerCase().includes(s) ||
+        r.projectTitle?.toLowerCase().includes(s) ||
+        r.leaderName?.toLowerCase().includes(s) ||
+        r.leaderEmail?.toLowerCase().includes(s) ||
+        r.leaderPrn?.toLowerCase().includes(s)
     );
   }
   return list.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 }
 
-export async function checkTechnexDuplicate({ teamName, leaderEmail, leaderPrn, transactionId }) {
+export async function checkTechnexDuplicate({ teamName, leaderEmail, leaderPrn }) {
   const db = getFileDb();
   const existing = db.technexRegistrations || [];
 
@@ -1050,9 +1059,6 @@ export async function checkTechnexDuplicate({ teamName, leaderEmail, leaderPrn, 
   }
   if (leaderPrn && existing.some((r) => r.leaderPrn.toUpperCase() === leaderPrn.toUpperCase())) {
     return { isDuplicate: true, field: "leaderPrn", message: "A team with this Leader PRN has already been registered." };
-  }
-  if (transactionId && existing.some((r) => r.transactionId.toUpperCase() === transactionId.toUpperCase())) {
-    return { isDuplicate: true, field: "transactionId", message: "This Payment Transaction ID has already been submitted for TECHNEX." };
   }
   return { isDuplicate: false };
 }
@@ -1066,10 +1072,12 @@ export async function createTechnexRegistration(data) {
   const db = getFileDb();
   const count = (db.technexRegistrations || []).length + 1;
   const regCode = `TNX-2026-${String(count).padStart(3, "0")}`;
+  const confirmationToken = crypto.randomBytes(24).toString("hex");
 
   const newReg = {
     id: `technex-${Date.now()}`,
     registrationCode: regCode,
+    confirmationToken,
     membershipType: data.membershipType || "Non-S4DS Member",
     registrationFee: Number(data.registrationFee) || 99,
     teamName: data.teamName.trim(),
@@ -1083,10 +1091,8 @@ export async function createTechnexRegistration(data) {
     leaderCollege: data.leaderCollege.trim(),
     leaderPrn: data.leaderPrn.toUpperCase().trim(),
     teamMembers: Array.isArray(data.teamMembers) ? data.teamMembers : [],
-    transactionId: (data.transactionId || "").toUpperCase().trim(),
-    paymentProofUrl: data.paymentProofUrl || "",
-    paymentStatus: "Pending Verification",
-    status: "Pending",
+    registrationStatus: "Successfully Registered",
+    status: data.status || "Approved",
     createdAt: new Date().toISOString(),
   };
 
@@ -1335,6 +1341,112 @@ export async function getActivePaymentQr() {
     title: "Official S4DS MITAOE Payment QR",
     fileUrl: "/images/payment-qr.png",
     isActive: true,
+  };
+}
+
+// ─────────────────────────────────────────────
+// WEBSITE SETTINGS (TECHNEX & Chapter Settings)
+// ─────────────────────────────────────────────
+export async function getSettings() {
+  const defaultSettings = {
+    activePaymentQrId: null,
+    activeBannerId: null,
+    technexWhatsappUrl: process.env.NEXT_PUBLIC_TECHNEX_WHATSAPP_URL || "https://chat.whatsapp.com/KFYW22NYGasBag1RZjnKJl",
+    technexWhatsappEnabled: true,
+  };
+
+  try {
+    if (await isRushDBConnected()) {
+      const catalog = await getSchemaCatalog();
+      if (catalog.labels.has("SETTING")) {
+        const list = await findRecords("SETTING", { limit: 1 });
+        if (list && list.length > 0) {
+          return { ...defaultSettings, ...list[0] };
+        }
+      }
+    }
+  } catch (err) {
+    console.warn("RushDB getSettings fallback:", err.message);
+  }
+
+  const db = getFileDb();
+  return { ...defaultSettings, ...(db.settings || {}) };
+}
+
+export async function updateSettings(updates) {
+  const current = await getSettings();
+  const merged = { ...current, ...updates };
+
+  try {
+    if (await isRushDBConnected()) {
+      await getSchemaCatalog();
+      const list = await findRecords("SETTING", { limit: 1 });
+      if (list && list.length > 0) {
+        await updateRecord("SETTING", list[0].id, merged);
+      } else {
+        await createRecord("SETTING", { id: "site-settings", ...merged });
+      }
+    }
+  } catch (err) {
+    console.warn("RushDB updateSettings fallback:", err.message);
+  }
+
+  const db = getFileDb();
+  db.settings = merged;
+  saveFileDb(db);
+  return merged;
+}
+
+export async function getTechnexRegistrationByConfirmation(id, token) {
+  if (!id) return null;
+
+  let reg = null;
+  try {
+    if (await isRushDBConnected()) {
+      const catalog = await getSchemaCatalog();
+      if (catalog.labels.has("TECHNEX_REGISTRATION")) {
+        reg = await findRecordById("TECHNEX_REGISTRATION", id);
+      }
+    }
+  } catch (err) {
+    console.warn("RushDB getTechnexRegistrationByConfirmation fallback:", err.message);
+  }
+
+  if (!reg) {
+    const db = getFileDb();
+    reg = (db.technexRegistrations || []).find((r) => r.id === id) || null;
+  }
+
+  if (!reg) return null;
+
+  // Validate confirmation token if present on record
+  if (reg.confirmationToken && token && reg.confirmationToken !== token) {
+    return null;
+  }
+
+  // Fetch settings for WhatsApp group link
+  const settings = await getSettings();
+
+  // Return sanitized confirmation details
+  return {
+    id: reg.id,
+    registrationCode: reg.registrationCode || reg.id,
+    teamName: reg.teamName,
+    projectTitle: reg.projectTitle,
+    domain: reg.domain,
+    leaderName: reg.leaderName,
+    leaderEmail: reg.leaderEmail,
+    leaderPhone: reg.leaderPhone,
+    leaderCollege: reg.leaderCollege,
+    leaderPrn: reg.leaderPrn,
+    membershipType: reg.membershipType,
+    registrationFee: reg.registrationFee,
+    registrationStatus: reg.registrationStatus || "Successfully Registered",
+    status: reg.status || "Approved",
+    teamMembers: reg.teamMembers || [],
+    createdAt: reg.createdAt,
+    whatsappUrl: settings.technexWhatsappUrl || process.env.NEXT_PUBLIC_TECHNEX_WHATSAPP_URL || "https://chat.whatsapp.com/KFYW22NYGasBag1RZjnKJl",
+    whatsappEnabled: settings.technexWhatsappEnabled !== false,
   };
 }
 

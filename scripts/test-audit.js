@@ -328,8 +328,6 @@ async function runAudit() {
       teamMembers: [
         { name: "Saurabh Patil", email: `saurabh.${testRunId}@mitaoe.ac.in`, phone: "9876543218", prn: `PRN_MBR_${testRunId}` },
       ],
-      transactionId: `TNXUTR${testRunId}`,
-      paymentProofUrl: "/uploads/test-receipt.png",
     };
 
     // 1. Submit S4DS Member team (₹49)
@@ -340,8 +338,8 @@ async function runAudit() {
     });
     const regCode = firstTechnexRes.data?.registrationCode;
     const isFee49 = firstTechnexRes.data?.data?.registrationFee === 49 && firstTechnexRes.data?.data?.membershipType === "S4DS Member";
-    const initialPaymentPending = firstTechnexRes.data?.data?.paymentStatus === "Pending Verification";
-    record("TECHNEX Workflow: Submit S4DS Member team (Verified ₹49 fee & Pending Verification status)", firstTechnexRes.status === 201 && Boolean(regCode) && isFee49 && initialPaymentPending);
+    const initialStatusOk = firstTechnexRes.data?.data?.registrationStatus === "Successfully Registered";
+    record("TECHNEX Workflow: Submit S4DS Member team (Verified ₹49 fee & Successfully Registered)", firstTechnexRes.status === 201 && Boolean(regCode) && isFee49 && initialStatusOk);
 
     // 2. Submit Non-S4DS Member team (₹99)
     const nonMemberTechnexRes = await fetchJson("/api/technex", {
@@ -354,7 +352,6 @@ async function runAudit() {
         teamName: `BetaInnovators_${testRunId}`,
         leaderEmail: `kunal.beta.${testRunId}@mitaoe.ac.in`,
         leaderPrn: `PRN_BETA_${testRunId}`,
-        transactionId: `TNXUTR_NON_${testRunId}`,
       }),
     });
     const isFee99 = nonMemberTechnexRes.data?.data?.registrationFee === 99 && nonMemberTechnexRes.data?.data?.membershipType === "Non-S4DS Member";
@@ -371,7 +368,6 @@ async function runAudit() {
         teamName: `TamperTeam_${testRunId}`,
         leaderEmail: `tamper.${testRunId}@mitaoe.ac.in`,
         leaderPrn: `PRN_TAMPER_${testRunId}`,
-        transactionId: `TNXUTR_TAMPER_${testRunId}`,
       }),
     });
     const feeRecalculated = tamperFeeRes.status === 201 && tamperFeeRes.data?.data?.registrationFee === 49;
@@ -389,18 +385,6 @@ async function runAudit() {
     });
     record("TECHNEX Security: Reject invalid membership category with HTTP 400", invalidCategoryRes.status === 400);
 
-    // 5. Validation: Reject submission without payment screenshot
-    const noScreenshotRes = await fetchJson("/api/technex", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        ...technexData,
-        teamName: `NoScreenshotTeam_${testRunId}`,
-        paymentProofUrl: "",
-      }),
-    });
-    record("TECHNEX Security: Reject submission without payment screenshot (HTTP 400)", noScreenshotRes.status === 400);
-
     const dupTechnexRes = await fetchJson("/api/technex", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -416,29 +400,36 @@ async function runAudit() {
     record("TECHNEX Workflow: Validate required fields and reject empty leader email", missingLeaderRes.status === 400);
 
     // ----------------------------------------------------
-    // CHECK 10: Status Update & Payment Verification by Admin
+    // CHECK 10: Confirmation API & Admin Registration Management
     // ----------------------------------------------------
     const createdTechId = firstTechnexRes.data?.data?.id;
+    const createdTechToken = firstTechnexRes.data?.data?.confirmationToken;
+
     if (createdTechId) {
-      // Test payment verification action
-      const verifyPaymentRes = await fetchJson(`/api/technex/${createdTechId}`, {
-        method: "PATCH",
-        headers: authHeaders,
-        body: JSON.stringify({ paymentStatus: "Verified", status: "Approved" }),
-      });
+      // Test confirmation retrieval
+      const confirmRes = await fetchJson(`/api/technex/confirm?id=${createdTechId}&token=${createdTechToken}`);
       record(
-        "Admin Verification: Authorize and update TECHNEX payment to Verified",
-        verifyPaymentRes.status === 200 &&
-          verifyPaymentRes.data?.data?.paymentStatus === "Verified" &&
-          verifyPaymentRes.data?.data?.status === "Approved"
+        "Confirmation API: /api/technex/confirm returns registration status 'Successfully Registered'",
+        confirmRes.status === 200 && confirmRes.data?.data?.registrationStatus === "Successfully Registered"
       );
 
-      // Test payment filter API
-      const filterRes = await fetchJson(`/api/technex?paymentStatus=Verified`, {
+      // Test status update action
+      const updateStatusRes = await fetchJson(`/api/technex/${createdTechId}`, {
+        method: "PATCH",
+        headers: authHeaders,
+        body: JSON.stringify({ status: "Approved" }),
+      });
+      record(
+        "Admin Management: Update TECHNEX approval status",
+        updateStatusRes.status === 200 && updateStatusRes.data?.data?.status === "Approved"
+      );
+
+      // Test membershipType filter API
+      const filterRes = await fetchJson(`/api/technex?membershipType=S4DS Member`, {
         headers: authHeaders,
       });
       record(
-        "Admin Verification: Filter TECHNEX registrations by paymentStatus",
+        "Admin Management: Filter TECHNEX registrations by membershipType",
         filterRes.status === 200 && Array.isArray(filterRes.data?.data)
       );
     }
@@ -570,7 +561,7 @@ async function runAudit() {
 
     const sitemapRes = await fetch(`${BASE_URL}/sitemap.xml`);
     const sitemapXml = await sitemapRes.text();
-    record("SEO: sitemap.xml dynamically lists all canonical routes", sitemapRes.status === 200 && sitemapXml.includes("/technex-2k26") && sitemapXml.includes("/events"));
+    record("SEO: sitemap.xml dynamically lists all canonical live routes", sitemapRes.status === 200 && sitemapXml.includes("/technex-2k26") && sitemapXml.includes("/contact") && !sitemapXml.includes("/events"));
 
     // ----------------------------------------------------
     // CHECK 13: Dashboard Analytics & Stats API

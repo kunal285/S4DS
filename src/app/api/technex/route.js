@@ -12,10 +12,10 @@ export async function GET(request) {
     const { searchParams } = new URL(request.url);
     const search = searchParams.get("search");
     const status = searchParams.get("status");
-    const paymentStatus = searchParams.get("paymentStatus");
+    const membershipType = searchParams.get("membershipType");
     const domain = searchParams.get("domain");
 
-    const registrations = await getTechnexRegistrations({ search, status, paymentStatus, domain });
+    const registrations = await getTechnexRegistrations({ search, status, membershipType, domain });
     return NextResponse.json({ success: true, count: registrations.length, data: registrations });
   } catch (err) {
     return NextResponse.json({ error: "Failed to fetch TECHNEX registrations" }, { status: 500 });
@@ -38,8 +38,6 @@ export async function POST(request) {
       leaderCollege,
       leaderPrn,
       teamMembers,
-      transactionId,
-      paymentProofUrl,
     } = body;
 
     // 0. Membership Tier & Server-Side Fee Verification (Security Enforcement)
@@ -85,20 +83,14 @@ export async function POST(request) {
     if (!leaderPrn || leaderPrn.trim().length < 3) {
       return NextResponse.json({ error: "Leader PRN / Roll Number is required." }, { status: 400 });
     }
-    if (!transactionId || transactionId.trim().length < 4) {
-      return NextResponse.json({ error: "Registration Payment Transaction ID / UTR is required." }, { status: 400 });
-    }
-    if (!paymentProofUrl || typeof paymentProofUrl !== "string" || !paymentProofUrl.trim()) {
-      return NextResponse.json({ error: "Payment screenshot receipt is required for TECHNEX registration." }, { status: 400 });
-    }
 
     // Duplicate prevention check
-    const dupCheck = await checkTechnexDuplicate({ teamName, leaderEmail, leaderPrn, transactionId });
+    const dupCheck = await checkTechnexDuplicate({ teamName, leaderEmail, leaderPrn });
     if (dupCheck.isDuplicate) {
       return NextResponse.json({ error: dupCheck.message, field: dupCheck.field }, { status: 409 });
     }
 
-    // Create registration with verified server-side fee
+    // Create registration with verified server-side fee (no payment proof required)
     const newReg = await createTechnexRegistration({
       membershipType,
       registrationFee: verifiedRegistrationFee,
@@ -113,8 +105,6 @@ export async function POST(request) {
       leaderCollege: leaderCollege.trim(),
       leaderPrn: leaderPrn.trim(),
       teamMembers: Array.isArray(teamMembers) ? teamMembers : [],
-      transactionId: transactionId.trim(),
-      paymentProofUrl: paymentProofUrl || "",
     });
 
     return NextResponse.json(

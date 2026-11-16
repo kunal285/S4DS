@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { isRouteLive } from "@/config/site-mode";
+import UnderDevelopment from "@/components/UnderDevelopment";
 import {
   CheckCircle2,
   BookOpen,
@@ -16,9 +18,16 @@ export const metadata = {
   title: "About S4DS MITAOE | Society for Data Science Student Chapter",
   description:
     "Learn about the mission, vision, faculty leadership, and academic initiatives of the Society for Data Science (S4DS) at MIT Academy of Engineering, Alandi, Pune.",
+  robots: {
+    index: false,
+    follow: false,
+  },
 };
 
 export default function AboutPage() {
+  if (!isRouteLive("/about")) {
+    return <UnderDevelopment section="About Us" />;
+  }
   const values = [
     {
       title: "Hands-on Technical Rigor",

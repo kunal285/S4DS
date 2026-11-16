@@ -14,6 +14,8 @@ import {
   ExternalLink,
   ShieldCheck,
   X,
+  Download,
+  Sparkles,
 } from "lucide-react";
 import Toast from "@/components/Toast";
 import LoadingSkeleton from "@/components/LoadingSkeleton";
@@ -26,13 +28,13 @@ export default function AdminRegistrationsPage() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
-  const [paymentFilter, setPaymentFilter] = useState("All");
+  const [membershipFilter, setMembershipFilter] = useState("All"); // "All", "S4DS Member", "Non-S4DS Member"
   const [selectedRecord, setSelectedRecord] = useState(null);
   const [toast, setToast] = useState(null);
 
   useEffect(() => {
     fetchData();
-  }, [tab, statusFilter, paymentFilter]);
+  }, [tab, statusFilter, membershipFilter]);
 
   const fetchData = async () => {
     setLoading(true);
@@ -42,7 +44,9 @@ export default function AdminRegistrationsPage() {
     try {
       const params = new URLSearchParams();
       if (statusFilter !== "All") params.append("status", statusFilter);
-      if (tab === "technex" && paymentFilter !== "All") params.append("paymentStatus", paymentFilter);
+      if (tab === "technex" && membershipFilter !== "All") {
+        params.append("membershipType", membershipFilter);
+      }
 
       if (tab === "technex") {
         const res = await fetch(`/api/technex?${params.toString()}`, { headers });
@@ -93,78 +97,154 @@ export default function AdminRegistrationsPage() {
     }
   };
 
-  const handlePaymentVerification = async (id, newPaymentStatus) => {
-    const token = localStorage.getItem("s4ds_admin_token");
-    const headers = {
-      "Content-Type": "application/json",
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-    };
-
-    try {
-      const correspondingStatus =
-        newPaymentStatus === "Verified" ? "Approved" : newPaymentStatus === "Rejected" ? "Rejected" : "Pending";
-
-      const res = await fetch(`/api/technex/${id}`, {
-        method: "PATCH",
-        headers,
-        body: JSON.stringify({
-          paymentStatus: newPaymentStatus,
-          status: correspondingStatus,
-        }),
-      });
-      const data = await res.json();
-      if (data.success) {
-        setToast({ type: "success", message: `Payment marked as ${newPaymentStatus}` });
-        if (selectedRecord && selectedRecord.id === id) {
-          setSelectedRecord({
-            ...selectedRecord,
-            paymentStatus: newPaymentStatus,
-            status: correspondingStatus,
-          });
-        }
-        fetchData();
-      } else {
-        setToast({ type: "error", message: data.error || "Payment verification failed" });
-      }
-    } catch {
-      setToast({ type: "error", message: "Network error during payment verification" });
-    }
-  };
-
   const currentList = tab === "technex" ? technexList : membershipList;
 
   const filtered = currentList.filter((item) => {
+    // Membership filter for TECHNEX
+    if (tab === "technex" && membershipFilter !== "All") {
+      if (item.membershipType !== membershipFilter) return false;
+    }
+
     if (!search) return true;
     const s = search.toLowerCase();
     if (tab === "technex") {
       return (
-        item.teamName.toLowerCase().includes(s) ||
-        item.projectTitle.toLowerCase().includes(s) ||
-        item.leaderName.toLowerCase().includes(s) ||
-        item.leaderEmail.toLowerCase().includes(s) ||
-        item.leaderPrn.toLowerCase().includes(s) ||
+        item.id?.toLowerCase().includes(s) ||
         (item.registrationCode && item.registrationCode.toLowerCase().includes(s)) ||
-        (item.transactionId && item.transactionId.toLowerCase().includes(s))
+        item.teamName?.toLowerCase().includes(s) ||
+        item.projectTitle?.toLowerCase().includes(s) ||
+        item.leaderName?.toLowerCase().includes(s) ||
+        item.leaderEmail?.toLowerCase().includes(s) ||
+        item.leaderPrn?.toLowerCase().includes(s) ||
+        item.domain?.toLowerCase().includes(s)
       );
     } else {
       return (
-        item.fullName.toLowerCase().includes(s) ||
-        item.email.toLowerCase().includes(s) ||
-        item.prn.toLowerCase().includes(s) ||
-        item.department.toLowerCase().includes(s) ||
+        item.fullName?.toLowerCase().includes(s) ||
+        item.email?.toLowerCase().includes(s) ||
+        item.prn?.toLowerCase().includes(s) ||
+        item.department?.toLowerCase().includes(s) ||
         (item.transactionId && item.transactionId.toLowerCase().includes(s))
       );
     }
   });
 
+  const handleExportCSV = () => {
+    if (tab === "technex") {
+      const headers = [
+        "Registration ID",
+        "Registration Code",
+        "Team Name",
+        "Project Title",
+        "Domain / Track",
+        "Membership Category",
+        "Registration Fee (INR)",
+        "Leader Name",
+        "Leader Email",
+        "Leader Phone",
+        "Leader PRN",
+        "Leader College",
+        "Team Size",
+        "Additional Members",
+        "Status",
+        "Registration Timestamp",
+      ];
+
+      const rows = filtered.map((item) => {
+        const addMembers = (item.teamMembers || [])
+          .map((m) => `${m.name} (${m.email || ""}${m.prn ? " - " + m.prn : ""})`)
+          .join("; ");
+
+        return [
+          `"${item.id || ""}"`,
+          `"${item.registrationCode || ""}"`,
+          `"${(item.teamName || "").replace(/"/g, '""')}"`,
+          `"${(item.projectTitle || "").replace(/"/g, '""')}"`,
+          `"${(item.domain || "").replace(/"/g, '""')}"`,
+          `"${item.membershipType || "Non-S4DS Member"}"`,
+          item.registrationFee ?? 49,
+          `"${(item.leaderName || "").replace(/"/g, '""')}"`,
+          `"${item.leaderEmail || ""}"`,
+          `"${item.leaderPhone || ""}"`,
+          `"${item.leaderPrn || ""}"`,
+          `"${(item.leaderCollege || "").replace(/"/g, '""')}"`,
+          1 + (item.teamMembers?.length || 0),
+          `"${addMembers.replace(/"/g, '""')}"`,
+          `"${item.status || "Registered"}"`,
+          `"${item.createdAt || ""}"`,
+        ];
+      });
+
+      const csvContent = [headers.join(","), ...rows.map((r) => r.join(","))].join("\n");
+      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.setAttribute("href", url);
+      link.setAttribute("download", `technex-2k26-registrations-${new Date().toISOString().slice(0, 10)}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      setToast({ type: "success", message: `Exported ${filtered.length} TECHNEX registrations to CSV!` });
+    } else {
+      const headers = [
+        "Registration ID",
+        "Full Name",
+        "Email",
+        "Phone",
+        "PRN",
+        "Department",
+        "Academic Year",
+        "Membership Plan",
+        "Status",
+        "Transaction ID",
+        "Registered At",
+      ];
+
+      const rows = filtered.map((item) => [
+        `"${item.id || ""}"`,
+        `"${(item.fullName || "").replace(/"/g, '""')}"`,
+        `"${item.email || ""}"`,
+        `"${item.phone || ""}"`,
+        `"${item.prn || ""}"`,
+        `"${(item.department || "").replace(/"/g, '""')}"`,
+        `"${item.academicYear || ""}"`,
+        `"${item.membershipPlan || ""}"`,
+        `"${item.status || "Pending"}"`,
+        `"${item.transactionId || ""}"`,
+        `"${item.createdAt || ""}"`,
+      ]);
+
+      const csvContent = [headers.join(","), ...rows.map((r) => r.join(","))].join("\n");
+      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.setAttribute("href", url);
+      link.setAttribute("download", `s4ds-memberships-${new Date().toISOString().slice(0, 10)}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      setToast({ type: "success", message: `Exported ${filtered.length} membership applications to CSV!` });
+    }
+  };
+
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div>
-        <h1 className="text-2xl font-black text-brand-white">Registrations & Verification</h1>
-        <p className="text-xs text-brand-muted">
-          Review payment proofs, inspect student credentials, and manage team approvals.
-        </p>
+      {/* Header with Export Button */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-black text-brand-white">Registrations Management</h1>
+          <p className="text-xs text-brand-muted">
+            Inspect team entries, filter by membership categories, manage approvals, and export to CSV.
+          </p>
+        </div>
+
+        <button
+          onClick={handleExportCSV}
+          disabled={filtered.length === 0}
+          className="px-4 py-2.5 rounded-xl bg-background-elevated hover:bg-background-secondary text-brand-yellow hover:text-white border border-brand-orange/40 text-xs font-bold flex items-center gap-2 transition-all shadow-md self-start sm:self-auto disabled:opacity-40"
+        >
+          <Download className="w-4 h-4 text-brand-orange" /> Export {tab === "technex" ? "TECHNEX" : "Members"} to CSV
+        </button>
       </div>
 
       {/* Tabs */}
@@ -197,13 +277,13 @@ export default function AdminRegistrationsPage() {
         </button>
       </div>
 
-      {/* Toolbar */}
+      {/* Toolbar: Filters & Search */}
       <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
         <div className="flex flex-wrap items-center gap-3">
           {/* Status Filter */}
           <div className="flex items-center gap-1.5 p-1 rounded-xl bg-background-card border border-brand-border">
             <span className="text-[10px] font-bold text-brand-muted uppercase px-2">Status:</span>
-            {["All", "Pending", "Approved", "Rejected"].map((st) => (
+            {["All", "Approved", "Pending", "Rejected"].map((st) => (
               <button
                 key={st}
                 onClick={() => setStatusFilter(st)}
@@ -218,39 +298,39 @@ export default function AdminRegistrationsPage() {
             ))}
           </div>
 
-          {/* Payment Status Filter (Exclusive to TECHNEX) */}
+          {/* Membership Category Filter (Exclusive to TECHNEX) */}
           {tab === "technex" && (
             <div className="flex items-center gap-1.5 p-1 rounded-xl bg-background-card border border-brand-orange/30">
               <span className="text-[10px] font-bold text-brand-orange uppercase px-2 flex items-center gap-1">
-                <ShieldCheck className="w-3 h-3" /> Payment:
+                <Sparkles className="w-3 h-3 text-brand-yellow" /> Category:
               </span>
               {[
                 { label: "All", value: "All" },
-                { label: "Pending", value: "Pending Verification" },
-                { label: "Verified", value: "Verified" },
-                { label: "Rejected", value: "Rejected" },
-              ].map((p) => (
+                { label: "S4DS (₹49)", value: "S4DS Member" },
+                { label: "Non-S4DS (₹99)", value: "Non-S4DS Member" },
+              ].map((c) => (
                 <button
-                  key={p.value}
-                  onClick={() => setPaymentFilter(p.value)}
+                  key={c.value}
+                  onClick={() => setMembershipFilter(c.value)}
                   className={`px-2.5 py-1 text-xs font-semibold rounded-lg transition-colors ${
-                    paymentFilter === p.value
+                    membershipFilter === c.value
                       ? "bg-brand-orange/20 text-brand-yellow border border-brand-orange/40 font-bold"
                       : "text-brand-muted hover:text-brand-white"
                   }`}
                 >
-                  {p.label}
+                  {c.label}
                 </button>
               ))}
             </div>
           )}
         </div>
 
-        <div className="relative w-full lg:w-72">
+        {/* Search Input (By Registration ID, Team, Leader, PRN, etc.) */}
+        <div className="relative w-full lg:w-80">
           <Search className="w-4 h-4 text-brand-muted absolute left-3 top-1/2 -translate-y-1/2" />
           <input
             type="text"
-            placeholder={tab === "technex" ? "Search team, leader, PRN, UTR..." : "Search name, PRN, UTR..."}
+            placeholder={tab === "technex" ? "Search by Reg ID, Team, Leader, PRN..." : "Search name, PRN, email..."}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="w-full pl-9 pr-3 py-2 text-xs rounded-xl bg-background-elevated border border-brand-border text-brand-white placeholder-brand-muted focus:outline-none focus:border-brand-orange"
@@ -272,13 +352,12 @@ export default function AdminRegistrationsPage() {
           <table className="w-full text-left text-xs">
             <thead className="bg-background-elevated border-b border-brand-border text-brand-secondary uppercase tracking-wider font-semibold">
               <tr>
-                <th className="px-5 py-3.5">Code / Team</th>
+                <th className="px-5 py-3.5">Registration ID / Team</th>
                 <th className="px-4 py-3.5">Project Title</th>
-                <th className="px-4 py-3.5">Track</th>
+                <th className="px-4 py-3.5">Track / Domain</th>
                 <th className="px-4 py-3.5">Leader Coordinates</th>
-                <th className="px-4 py-3.5">Membership / Fee</th>
-                <th className="px-4 py-3.5">Payment Verification</th>
-                <th className="px-4 py-3.5">UTR Reference</th>
+                <th className="px-4 py-3.5">Membership Category</th>
+                <th className="px-4 py-3.5">Registration Fee</th>
                 <th className="px-4 py-3.5">Status</th>
                 <th className="px-5 py-3.5 text-right">Details</th>
               </tr>
@@ -287,8 +366,8 @@ export default function AdminRegistrationsPage() {
               {filtered.map((item) => (
                 <tr key={item.id} className="hover:bg-background-elevated/40 transition-colors">
                   <td className="px-5 py-4">
-                    <span className="font-mono text-brand-yellow font-bold block">
-                      {item.registrationCode || "PENDING"}
+                    <span className="font-mono text-brand-yellow font-bold block text-sm">
+                      {item.registrationCode || item.id}
                     </span>
                     <span className="font-bold text-brand-white text-sm">{item.teamName}</span>
                     <span className="text-[11px] text-brand-muted block">
@@ -309,54 +388,34 @@ export default function AdminRegistrationsPage() {
                     <div className="text-[11px] text-brand-muted font-mono">PRN: {item.leaderPrn}</div>
                   </td>
                   <td className="px-4 py-4">
-                    <span className="inline-block px-2 py-0.5 rounded text-[10px] font-bold bg-background-elevated text-brand-yellow border border-brand-orange/40">
-                      {item.membershipType || "S4DS Member"}
+                    <span className="inline-block px-2.5 py-1 rounded-lg text-[10px] font-bold bg-background-elevated text-brand-yellow border border-brand-orange/40">
+                      {item.membershipType || "Non-S4DS Member"}
                     </span>
-                    <div className="font-black text-brand-white text-xs mt-0.5">
-                      ₹{item.registrationFee ?? 49}
-                    </div>
+                  </td>
+                  <td className="px-4 py-4">
+                    <span className="font-mono font-black text-brand-white text-sm">
+                      ₹{item.registrationFee ?? (item.membershipType === "S4DS Member" ? 49 : 99)}
+                    </span>
                   </td>
                   <td className="px-4 py-4">
                     <span
-                      className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-bold ${
-                        item.paymentStatus === "Verified"
-                          ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/40"
-                          : item.paymentStatus === "Rejected"
-                          ? "bg-rose-500/20 text-rose-300 border border-rose-500/40"
-                          : "bg-amber-500/20 text-brand-yellow border border-amber-500/40"
-                      }`}
-                    >
-                      {item.paymentStatus === "Verified" ? (
-                        <CheckCircle2 className="w-3 h-3 text-emerald-400" />
-                      ) : item.paymentStatus === "Rejected" ? (
-                        <XCircle className="w-3 h-3 text-rose-400" />
-                      ) : (
-                        <Clock className="w-3 h-3 text-brand-yellow" />
-                      )}
-                      {item.paymentStatus || "Pending Verification"}
-                    </span>
-                  </td>
-                  <td className="px-4 py-4 font-mono text-brand-secondary">
-                    {item.transactionId || "N/A"}
-                  </td>
-                  <td className="px-4 py-4">
-                    <span
-                      className={`px-2 py-0.5 rounded text-[10px] font-bold ${
-                        item.status === "Approved"
+                      className={`px-2.5 py-1 rounded-full text-[10px] font-bold flex items-center gap-1 w-fit ${
+                        item.status === "Approved" || item.status === "Successfully Registered"
                           ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/40"
                           : item.status === "Rejected"
                           ? "bg-rose-500/20 text-rose-300 border border-rose-500/40"
                           : "bg-brand-orange/20 text-brand-yellow border border-brand-orange/40"
                       }`}
                     >
-                      {item.status}
+                      <CheckCircle2 className="w-3 h-3 text-emerald-400" />
+                      {item.status || "Registered"}
                     </span>
                   </td>
                   <td className="px-5 py-4 text-right">
                     <button
                       onClick={() => setSelectedRecord(item)}
                       className="p-1.5 rounded-lg bg-background-elevated hover:bg-background-secondary text-brand-secondary hover:text-brand-white border border-brand-border transition-colors"
-                      title="Inspect Team & Verify Payment"
+                      title="Inspect Team Details"
                     >
                       <Eye className="w-4 h-4" />
                     </button>
@@ -444,7 +503,7 @@ export default function AdminRegistrationsPage() {
 
             {/* Quick Status Bar */}
             <div className="p-4 rounded-xl bg-background-elevated border border-brand-border flex items-center justify-between">
-              <span className="text-xs text-brand-secondary">Current Status:</span>
+              <span className="text-xs text-brand-secondary">Approval Status:</span>
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => handleStatusUpdate(selectedRecord.id, "Approved")}
@@ -470,6 +529,22 @@ export default function AdminRegistrationsPage() {
             {/* Content Details */}
             {tab === "technex" ? (
               <div className="space-y-4 text-xs">
+                {/* Registration Code & Membership Fee Summary */}
+                <div className="grid grid-cols-2 gap-3 p-4 rounded-xl bg-background-elevated border border-brand-border text-brand-secondary">
+                  <div>
+                    <span className="text-brand-muted block text-[10px] uppercase font-bold">Registration Code:</span>
+                    <span className="text-brand-yellow font-black text-base font-mono">
+                      {selectedRecord.registrationCode || selectedRecord.id}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-brand-muted block text-[10px] uppercase font-bold">Membership & Fee:</span>
+                    <span className="text-brand-white font-bold text-xs">
+                      {selectedRecord.membershipType || "Non-S4DS Member"} (₹{selectedRecord.registrationFee ?? 49})
+                    </span>
+                  </div>
+                </div>
+
                 <div className="p-4 rounded-xl bg-background-elevated border border-brand-border space-y-2">
                   <div className="text-sm font-bold text-brand-white">{selectedRecord.projectTitle}</div>
                   <div className="text-brand-orange font-semibold">{selectedRecord.domain}</div>
@@ -505,7 +580,9 @@ export default function AdminRegistrationsPage() {
 
                 {selectedRecord.teamMembers?.length > 0 && (
                   <div className="p-4 rounded-xl bg-background-elevated border border-brand-border space-y-2">
-                    <span className="font-bold text-brand-white block">Additional Members:</span>
+                    <span className="font-bold text-brand-white block">
+                      Additional Members ({selectedRecord.teamMembers.length}):
+                    </span>
                     {selectedRecord.teamMembers.map((m, i) => (
                       <div key={i} className="text-brand-secondary border-t border-brand-border pt-2 grid grid-cols-2 gap-1">
                         <div>#{i + 2}: {m.name}</div>
@@ -518,133 +595,35 @@ export default function AdminRegistrationsPage() {
                 )}
               </div>
             ) : (
-              <div className="p-4 rounded-xl bg-background-elevated border border-brand-border space-y-3 text-xs text-brand-secondary">
-                <div className="grid grid-cols-2 gap-3">
-                  <div>Full Name: <span className="font-bold text-brand-white">{selectedRecord.fullName}</span></div>
-                  <div>PRN: <span className="font-mono font-bold text-brand-white">{selectedRecord.prn}</span></div>
-                  <div>Email: {selectedRecord.email}</div>
-                  <div>Phone: {selectedRecord.phone}</div>
-                  <div>Department: {selectedRecord.department}</div>
-                  <div>Academic Year: {selectedRecord.academicYear}</div>
-                  <div>Plan: {selectedRecord.membershipPlan}</div>
+              <div className="space-y-4 text-xs">
+                <div className="p-4 rounded-xl bg-background-elevated border border-brand-border space-y-3 text-xs text-brand-secondary">
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>Full Name: <span className="font-bold text-brand-white">{selectedRecord.fullName}</span></div>
+                    <div>PRN: <span className="font-mono font-bold text-brand-white">{selectedRecord.prn}</span></div>
+                    <div>Email: {selectedRecord.email}</div>
+                    <div>Phone: {selectedRecord.phone}</div>
+                    <div>Department: {selectedRecord.department}</div>
+                    <div>Academic Year: {selectedRecord.academicYear}</div>
+                    <div>Plan: {selectedRecord.membershipPlan}</div>
+                    <div>Transaction ID: {selectedRecord.transactionId}</div>
+                  </div>
                 </div>
+
+                {selectedRecord.paymentProofUrl && (
+                  <div className="p-4 rounded-xl bg-background-elevated border border-brand-border space-y-2">
+                    <span className="font-bold text-brand-white block">Payment Proof Screenshot:</span>
+                    <a
+                      href={selectedRecord.paymentProofUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-brand-orange hover:text-brand-yellow hover:underline flex items-center gap-1 font-semibold"
+                    >
+                      <ExternalLink className="w-3.5 h-3.5" /> View Receipt
+                    </a>
+                  </div>
+                )}
               </div>
             )}
-
-            {/* Payment Proof & Verification View */}
-            <div className="p-5 rounded-2xl bg-background-elevated border-2 border-brand-orange/30 space-y-4 text-xs shadow-lg">
-              <div className="flex items-center justify-between pb-2 border-b border-brand-border">
-                <span className="font-bold text-brand-white flex items-center gap-1.5 text-sm">
-                  <ShieldCheck className="w-4 h-4 text-brand-orange" /> Payment &amp; UTR Verification
-                </span>
-                {tab === "technex" && (
-                  <span
-                    className={`px-2.5 py-1 rounded-lg text-xs font-bold flex items-center gap-1.5 ${
-                      selectedRecord.paymentStatus === "Verified"
-                        ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/40"
-                        : selectedRecord.paymentStatus === "Rejected"
-                        ? "bg-rose-500/20 text-rose-300 border border-rose-500/40"
-                        : "bg-amber-500/20 text-brand-yellow border border-amber-500/40"
-                    }`}
-                  >
-                    {selectedRecord.paymentStatus === "Verified" ? (
-                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
-                    ) : selectedRecord.paymentStatus === "Rejected" ? (
-                      <XCircle className="w-3.5 h-3.5 text-rose-400" />
-                    ) : (
-                      <Clock className="w-3.5 h-3.5 text-brand-yellow" />
-                    )}
-                    {selectedRecord.paymentStatus || "Pending Verification"}
-                  </span>
-                )}
-              </div>
-
-              {tab === "technex" && (
-                <div className="grid grid-cols-2 gap-3 p-3 rounded-xl bg-background-card border border-brand-border text-brand-secondary">
-                  <div>
-                    <span className="text-brand-muted block text-[10px] uppercase font-bold">Category:</span>
-                    <span className="text-brand-orange font-bold text-xs">{selectedRecord.membershipType || "S4DS Member"}</span>
-                  </div>
-                  <div>
-                    <span className="text-brand-muted block text-[10px] uppercase font-bold">Verified Amount:</span>
-                    <span className="text-brand-yellow font-black text-sm font-mono">₹{selectedRecord.registrationFee ?? 49}</span>
-                  </div>
-                </div>
-              )}
-
-              <div className="p-3 rounded-xl bg-background-card border border-brand-border space-y-1">
-                <span className="text-brand-muted block text-[10px] uppercase font-bold">
-                  UPI Transaction ID / UTR:
-                </span>
-                <span className="font-mono text-brand-yellow font-black text-sm tracking-wide block">
-                  {selectedRecord.transactionId || "N/A"}
-                </span>
-              </div>
-
-              {/* Payment Receipt Image Preview */}
-              <div className="space-y-2">
-                <span className="text-brand-muted block text-[10px] uppercase font-bold">
-                  Uploaded Payment Proof:
-                </span>
-                {selectedRecord.paymentProofUrl ? (
-                  <div className="space-y-2">
-                    <div className="relative max-h-60 rounded-xl overflow-hidden border border-brand-border bg-black/50 flex items-center justify-center p-2">
-                      <img
-                        src={selectedRecord.paymentProofUrl}
-                        alt="Payment Screenshot Receipt"
-                        className="max-h-56 max-w-full object-contain rounded-lg shadow-md"
-                      />
-                    </div>
-                    <div className="flex justify-end">
-                      <a
-                        href={selectedRecord.paymentProofUrl}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-brand-orange/20 text-brand-yellow text-xs font-semibold hover:bg-brand-orange/30 transition-colors border border-brand-orange/30"
-                      >
-                        <ExternalLink className="w-3.5 h-3.5" /> Open Full Resolution Receipt
-                      </a>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="p-4 rounded-xl bg-background-card border border-brand-border text-center text-brand-muted italic">
-                    No receipt image attached to this record
-                  </div>
-                )}
-              </div>
-
-              {/* Admin Direct Action for TECHNEX Payment */}
-              {tab === "technex" && (
-                <div className="pt-3 border-t border-brand-border space-y-2">
-                  <span className="text-[11px] font-bold text-brand-white block uppercase tracking-wider">
-                    Update Payment Status:
-                  </span>
-                  <div className="flex flex-wrap items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={() => handlePaymentVerification(selectedRecord.id, "Verified")}
-                      className="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-md transition-colors flex items-center gap-1.5"
-                    >
-                      <CheckCircle2 className="w-3.5 h-3.5" /> Approve &amp; Verify Payment
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handlePaymentVerification(selectedRecord.id, "Rejected")}
-                      className="px-3.5 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs shadow-md transition-colors flex items-center gap-1.5"
-                    >
-                      <XCircle className="w-3.5 h-3.5" /> Reject Payment
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handlePaymentVerification(selectedRecord.id, "Pending Verification")}
-                      className="px-3 py-2 rounded-xl bg-amber-600 hover:bg-amber-500 text-white font-semibold text-xs shadow-md transition-colors flex items-center gap-1.5"
-                    >
-                      <Clock className="w-3.5 h-3.5" /> Mark Pending
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
 
             <div className="flex justify-end pt-2">
               <button

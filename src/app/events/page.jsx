@@ -3,6 +3,8 @@
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { isRouteLive } from "@/config/site-mode";
+import UnderDevelopment from "@/components/UnderDevelopment";
 import {
   Calendar,
   Clock,
@@ -18,6 +20,10 @@ import LoadingSkeleton from "@/components/LoadingSkeleton";
 import EmptyState from "@/components/EmptyState";
 
 export default function EventsPage() {
+  if (!isRouteLive("/events")) {
+    return <UnderDevelopment section="Events & Workshops" />;
+  }
+
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");

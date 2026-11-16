@@ -65,32 +65,33 @@ export default function Footer() {
           {/* Col 2: Quick Links */}
           <div className="space-y-3">
             <h3 className="text-sm font-bold uppercase tracking-wider text-brand-white">
-              Navigation
+              Public Sections
             </h3>
             <ul className="space-y-2 text-sm">
               <li>
                 <Link href="/" className="hover:text-brand-orange transition-colors">
-                  Home
+                  Home (Live)
                 </Link>
               </li>
               <li>
-                <Link href="/about" className="hover:text-brand-orange transition-colors">
-                  About the Chapter
+                <Link href="/technex-2k26" className="text-brand-yellow hover:text-brand-orange font-semibold transition-colors flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-brand-yellow animate-pulse" />
+                  TECHNEX 2K26 (Live)
                 </Link>
               </li>
               <li>
-                <Link href="/events" className="hover:text-brand-orange transition-colors">
-                  Workshops & Events
+                <Link href="/contact" className="hover:text-brand-orange transition-colors">
+                  Contact Us (Live)
                 </Link>
               </li>
               <li>
-                <Link href="/team" className="hover:text-brand-orange transition-colors">
-                  Leadership & Faculty
+                <Link href="/about" className="hover:text-brand-orange transition-colors text-brand-muted/70 flex items-center gap-1.5">
+                  About Chapter <span className="text-[10px] text-brand-muted">(Soon)</span>
                 </Link>
               </li>
               <li>
-                <Link href="/gallery" className="hover:text-brand-orange transition-colors">
-                  Event Gallery
+                <Link href="/events" className="hover:text-brand-orange transition-colors text-brand-muted/70 flex items-center gap-1.5">
+                  Workshops &amp; Events <span className="text-[10px] text-brand-muted">(Soon)</span>
                 </Link>
               </li>
             </ul>
@@ -99,23 +100,27 @@ export default function Footer() {
           {/* Col 3: Initiatives & Programs */}
           <div className="space-y-3">
             <h3 className="text-sm font-bold uppercase tracking-wider text-brand-white">
-              Initiatives
+              Initiatives &amp; Team
             </h3>
             <ul className="space-y-2 text-sm">
               <li>
-                <Link href="/technex-2k26" className="text-brand-yellow hover:text-brand-orange font-semibold transition-colors flex items-center gap-1.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-brand-yellow animate-pulse" />
-                  TECHNEX 2K26 Expo
+                <Link href="/team" className="hover:text-brand-orange transition-colors text-brand-muted/70 flex items-center gap-1.5">
+                  Executive Team <span className="text-[10px] text-brand-muted">(Soon)</span>
                 </Link>
               </li>
               <li>
-                <Link href="/membership" className="hover:text-brand-orange transition-colors">
-                  Join S4DS Membership
+                <Link href="/gallery" className="hover:text-brand-orange transition-colors text-brand-muted/70 flex items-center gap-1.5">
+                  Event Gallery <span className="text-[10px] text-brand-muted">(Soon)</span>
                 </Link>
               </li>
               <li>
-                <Link href="/contact" className="hover:text-brand-orange transition-colors">
-                  Sponsorship & Collaboration
+                <Link href="/projects" className="hover:text-brand-orange transition-colors text-brand-muted/70 flex items-center gap-1.5">
+                  Student Projects <span className="text-[10px] text-brand-muted">(Soon)</span>
+                </Link>
+              </li>
+              <li>
+                <Link href="/membership" className="hover:text-brand-orange transition-colors text-brand-muted/70 flex items-center gap-1.5">
+                  Membership Portal <span className="text-[10px] text-brand-muted">(Soon)</span>
                 </Link>
               </li>
             </ul>

@@ -14,17 +14,17 @@
       "id": "event-technex-2026",
       "title": "TECHNEX 2K26 - Project Expo",
       "category": "Competition",
-      "date": "2026-11-28",
+      "date": "2026-11-21",
       "time": "09:00 AM - 05:00 PM IST",
       "venue": "MIT Academy of Engineering Campus & Central Auditorium, Alandi, Pune",
       "description": "The premier annual flagship Project Expo and Competition organized by the Society for Data Science (S4DS) Student Chapter, MITAOE. Showcase breakthrough innovations across AI/ML, Web3, IoT, Cloud, and Software Engineering.",
-      "posterUrl": "/images/technex-poster.png",
+      "posterUrl": "https://cflqsjjkekfrnjjbhuja.supabase.co/storage/v1/object/public/s4ds-media/events/posters/1794862447532_TECHNEX_2K26_Project_Expo_Poster__2_.png",
       "registrationDeadline": "2026-11-25",
       "prizePool": "",
       "status": "Upcoming",
       "isFeatured": false,
       "createdAt": "2026-11-01T10:00:00.000Z",
-      "updatedAt": "2026-11-16T20:04:44.074Z"
+      "updatedAt": "2026-11-16T20:54:17.705Z"
     }
   ],
   "team": [
@@ -259,9 +259,35 @@
   "gallery": [],
   "memberships": [],
   "technexRegistrations": [],
-  "mediaItems": [],
+  "mediaItems": [
+    {
+      "id": "media-1794862449757-g1b7",
+      "title": "TECHNEX 2K26 - Project Expo",
+      "fileName": "TECHNEX 2K26 Project Expo Poster (2).png",
+      "category": "event-poster",
+      "folder": "events/posters",
+      "storagePath": "events/posters/1794862447532_TECHNEX_2K26_Project_Expo_Poster__2_.png",
+      "fileUrl": "https://cflqsjjkekfrnjjbhuja.supabase.co/storage/v1/object/public/s4ds-media/events/posters/1794862447532_TECHNEX_2K26_Project_Expo_Poster__2_.png",
+      "fileSize": 2197720,
+      "mimeType": "image/png",
+      "isPrivate": false,
+      "isActive": false,
+      "associatedRecordId": null,
+      "createdAt": "2026-11-16T20:54:09.757Z"
+    }
+  ],
   "settings": {
     "activePaymentQrId": null,
-    "activeBannerId": null
+    "activeBannerId": null,
+    "technexWhatsappUrl": "https://chat.whatsapp.com/KFYW22NYGasBag1RZjnKJl",
+    "technexWhatsappEnabled": true,
+    "id": "site-settings",
+    "__id": "01a1e613-9a19-72b2-bd4a-86dda420fe88",
+    "__label": "SETTING",
+    "__proptypes": {
+      "technexWhatsappEnabled": "boolean",
+      "technexWhatsappUrl": "string",
+      "id": "string"
+    }
   }
 }

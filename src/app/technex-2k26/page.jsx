@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import {
@@ -12,20 +12,32 @@ import {
   Clock,
   Plus,
   Trash2,
-  Upload,
   CheckCircle2,
   AlertCircle,
   ShieldCheck,
   Zap,
   Users,
-  QrCode,
-  Copy,
-  Check,
   ExternalLink,
-  Smartphone,
-  Info,
 } from "lucide-react";
 import Toast from "@/components/Toast";
+
+function WhatsAppIcon({ className = "w-5 h-5" }) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="currentColor"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <path d="M17.472 14.382c-.301-.15-1.78-.878-2.056-.978-.276-.1-.476-.15-.676.15-.2.301-.776.978-.952 1.179-.175.2-.351.225-.652.075-.301-.15-1.27-.468-2.42-1.493-.895-.798-1.5-1.784-1.675-2.085-.176-.301-.019-.464.132-.614.136-.135.301-.351.451-.527.151-.175.201-.3.301-.501.1-.2.05-.376-.025-.526-.075-.15-.676-1.63-.927-2.232-.244-.587-.492-.507-.676-.516l-.576-.01c-.2 0-.526.075-.802.376s-1.053 1.028-1.053 2.508c0 1.48 1.078 2.909 1.229 3.109.15.2 2.122 3.24 5.141 4.544.718.31 1.279.496 1.716.634.721.23 1.378.197 1.897.12.578-.087 1.78-.727 2.03-1.429.251-.702.251-1.303.176-1.429-.076-.125-.276-.2-.577-.35z" />
+      <path
+        fillRule="evenodd"
+        clipRule="evenodd"
+        d="M12 2C6.477 2 2 6.477 2 12c0 1.89.525 3.66 1.438 5.168L2.05 21.95a.5.5 0 0 0 .61.61l4.83-1.385A9.957 9.957 0 0 0 12 22c5.523 0 10-4.477 10-10S17.523 2 12 2zm0 18.2a8.17 8.17 0 0 1-4.223-1.168.5.5 0 0 0-.411-.047l-3.376.968.974-3.356a.5.5 0 0 0-.05-.418A8.17 8.17 0 0 1 3.8 12c0-4.529 3.671-8.2 8.2-8.2 4.529 0 8.2 3.671 8.2 8.2 0 4.529-3.671 8.2-8.2 8.2z"
+      />
+    </svg>
+  );
+}
 
 export default function TechnexPage() {
   const [formData, setFormData] = useState({
@@ -42,75 +54,11 @@ export default function TechnexPage() {
     leaderCollege: "MIT Academy of Engineering, Pune",
     leaderPrn: "",
     teamMembers: [],
-    transactionId: "",
-    paymentProofUrl: "",
   });
 
-  const [paymentConfirmed, setPaymentConfirmed] = useState(false);
-  const [copiedUpi, setCopiedUpi] = useState(false);
-  const [qrCodeDataUrl, setQrCodeDataUrl] = useState("/images/payment-qr.png");
-  const [activePaymentQr, setActivePaymentQr] = useState(null);
-  const [uploading, setUploading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
-  const [successData, setSuccessData] = useState(null);
   const [toast, setToast] = useState(null);
-
-  const upiId = process.env.NEXT_PUBLIC_UPI_ID || "9172106568@airtel";
-
-  // Fetch active payment QR from Supabase via backend endpoint
-  useEffect(() => {
-    fetch("/api/media/active?category=payment-qr")
-      .then((res) => res.json())
-      .then((json) => {
-        if (json.success && json.data?.fileUrl) {
-          setActivePaymentQr(json.data);
-        }
-      })
-      .catch((err) => {
-        console.warn("Could not fetch active Supabase QR:", err);
-      });
-  }, []);
-
-  // Dynamically generate genuine UPI QR code whenever fee or membership changes
-  useEffect(() => {
-    let active = true;
-    const upiUri = `upi://pay?pa=${encodeURIComponent(upiId)}&pn=${encodeURIComponent("S4DS MITAOE")}&am=${formData.registrationFee}&cu=INR&tn=${encodeURIComponent("TECHNEX2K26 Registration")}`;
-
-    import("qrcode")
-      .then((QRCode) => {
-        QRCode.toDataURL(upiUri, {
-          width: 512,
-          margin: 2,
-          color: {
-            dark: "#0D0A08",
-            light: "#FFFFFF",
-          },
-        })
-          .then((url) => {
-            if (active) setQrCodeDataUrl(url);
-          })
-          .catch(() => {
-            if (active) setQrCodeDataUrl("/images/payment-qr.png");
-          });
-      })
-      .catch(() => {
-        if (active) setQrCodeDataUrl("/images/payment-qr.png");
-      });
-
-    return () => {
-      active = false;
-    };
-  }, [formData.registrationFee, upiId]);
-
-  const handleCopyUpi = () => {
-    if (typeof navigator !== "undefined" && navigator.clipboard) {
-      navigator.clipboard.writeText(upiId);
-      setCopiedUpi(true);
-      setToast({ type: "info", message: "UPI ID copied to clipboard!" });
-      setTimeout(() => setCopiedUpi(false), 2500);
-    }
-  };
 
   const domains = [
     "Artificial Intelligence & ML",
@@ -159,38 +107,6 @@ export default function TechnexPage() {
     });
   };
 
-  const handleFileUpload = async (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    setUploading(true);
-    setErrorMessage("");
-
-    try {
-      const data = new FormData();
-      data.append("file", file);
-      data.append("category", "payment-screenshot");
-      data.append("title", `TECHNEX Payment - ${formData.teamName || "Team"} - UTR ${formData.transactionId || "Receipt"}`);
-
-      const res = await fetch("/api/upload", {
-        method: "POST",
-        body: data,
-      });
-
-      const json = await res.json();
-      if (json.success) {
-        setFormData((prev) => ({ ...prev, paymentProofUrl: json.url }));
-        setToast({ type: "success", message: "Payment receipt uploaded!" });
-      } else {
-        setErrorMessage(json.error || "Failed to upload image");
-      }
-    } catch (err) {
-      setErrorMessage("Network error during image upload.");
-    } finally {
-      setUploading(false);
-    }
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSubmitting(true);
@@ -232,21 +148,6 @@ export default function TechnexPage() {
       setSubmitting(false);
       return;
     }
-    if (!formData.transactionId || formData.transactionId.trim().length < 4) {
-      setErrorMessage("Please provide the UPI Payment Transaction ID (UTR).");
-      setSubmitting(false);
-      return;
-    }
-    if (!formData.paymentProofUrl) {
-      setErrorMessage("Please upload your UPI payment screenshot receipt to proceed.");
-      setSubmitting(false);
-      return;
-    }
-    if (!paymentConfirmed) {
-      setErrorMessage("Please check the confirmation box verifying that you have completed the UPI payment.");
-      setSubmitting(false);
-      return;
-    }
 
     try {
       const res = await fetch("/api/technex", {
@@ -257,8 +158,11 @@ export default function TechnexPage() {
 
       const json = await res.json();
       if (res.ok && json.success) {
-        setSuccessData(json.data);
-        setToast({ type: "success", message: "TECHNEX 2K26 Registration Successful!" });
+        const regId = json.data?.id;
+        const token = json.data?.confirmationToken || "";
+        setToast({ type: "success", message: "TECHNEX 2K26 Registration Successful! Redirecting..." });
+        window.location.href = `/registration/success?id=${encodeURIComponent(regId)}&token=${encodeURIComponent(token)}`;
+        return;
       } else {
         setErrorMessage(json.error || "Failed to submit registration. Please verify details.");
       }
@@ -268,99 +172,6 @@ export default function TechnexPage() {
       setSubmitting(false);
     }
   };
-
-  if (successData) {
-    return (
-      <div className="max-w-3xl mx-auto px-4 py-20">
-        <div className="p-8 sm:p-12 rounded-3xl bg-background-card border border-brand-orange/40 text-center space-y-6 shadow-2xl">
-          <div className="w-16 h-16 rounded-full bg-brand-orange/20 border border-brand-orange/40 flex items-center justify-center mx-auto text-brand-orange">
-            <CheckCircle2 className="w-8 h-8" />
-          </div>
-
-          <span className="px-3 py-1 rounded-full text-xs font-bold bg-brand-orange/20 text-brand-yellow uppercase tracking-wider border border-brand-orange/30">
-            Registration Confirmed
-          </span>
-
-          <h1 className="text-3xl sm:text-4xl font-black text-brand-white">
-            Team {successData.teamName} Registered!
-          </h1>
-
-          <p className="text-brand-secondary max-w-lg mx-auto text-sm sm:text-base leading-relaxed">
-            Your project <strong className="text-brand-white">&quot;{successData.projectTitle}&quot;</strong> has been
-            registered for TECHNEX 2K26. Save your Registration Code below for on-campus verification and booth allocation.
-          </p>
-
-          <div className="p-6 rounded-2xl bg-background-elevated border border-brand-border max-w-md mx-auto space-y-3 text-left">
-            <div className="flex justify-between items-center pb-2 border-b border-brand-border">
-              <span className="text-xs text-brand-muted">Registration Code:</span>
-              <span className="font-mono text-xl font-black text-brand-yellow">
-                {successData.registrationCode}
-              </span>
-            </div>
-            <div className="flex justify-between text-xs text-brand-secondary">
-              <span className="text-brand-muted">Membership Category:</span>
-              <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-brand-orange/20 text-brand-yellow border border-brand-orange/40">
-                {successData.membershipType}
-              </span>
-            </div>
-            <div className="flex justify-between text-xs text-brand-secondary">
-              <span className="text-brand-muted">Verified Fee:</span>
-              <span className="font-bold text-brand-white font-mono">₹{successData.registrationFee}</span>
-            </div>
-            <div className="flex justify-between text-xs text-brand-secondary">
-              <span className="text-brand-muted">Payment Status:</span>
-              <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/20 text-brand-yellow border border-amber-500/40">
-                {successData.paymentStatus || "Pending Verification"}
-              </span>
-            </div>
-            <div className="flex justify-between text-xs text-brand-secondary">
-              <span className="text-brand-muted">Domain:</span>
-              <span className="font-semibold text-brand-white">{successData.domain}</span>
-            </div>
-            <div className="flex justify-between text-xs text-brand-secondary">
-              <span className="text-brand-muted">Team Leader:</span>
-              <span>{successData.leaderName}</span>
-            </div>
-            <div className="flex justify-between text-xs text-brand-secondary">
-              <span className="text-brand-muted">Total Members:</span>
-              <span>{1 + (successData.teamMembers?.length || 0)} Members</span>
-            </div>
-            <div className="flex justify-between text-xs text-brand-secondary pt-2 border-t border-brand-border font-mono">
-              <span className="text-brand-muted">UTR / Ref:</span>
-              <span className="text-brand-secondary">{successData.transactionId}</span>
-            </div>
-            {successData.paymentProofUrl && (
-              <div className="pt-2 text-xs">
-                <a
-                  href={successData.paymentProofUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="text-brand-orange hover:text-brand-yellow hover:underline flex items-center gap-1 font-semibold"
-                >
-                  <ExternalLink className="w-3.5 h-3.5" /> View Uploaded Receipt Screenshot
-                </a>
-              </div>
-            )}
-          </div>
-
-          <div className="pt-4 flex flex-wrap justify-center gap-4">
-            <Link
-              href="/"
-              className="px-6 py-2.5 rounded-xl bg-background-secondary hover:bg-background-elevated text-brand-white text-sm font-semibold border border-brand-border transition-colors"
-            >
-              Return Home
-            </Link>
-            <Link
-              href="/events"
-              className="px-6 py-2.5 rounded-xl brand-btn text-brand-white text-sm font-bold shadow-md"
-            >
-              Explore Other Events
-            </Link>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 space-y-16">
@@ -432,6 +243,34 @@ export default function TechnexPage() {
               <span className="text-sm font-bold text-brand-secondary">{d}</span>
             </div>
           ))}
+        </div>
+      </div>
+
+      {/* ── Official WhatsApp Group Banner ── */}
+      <div className="p-6 sm:p-8 rounded-3xl bg-gradient-to-r from-[#17110D] via-[#1b251d] to-[#121c14] border-2 border-[#25D366]/40 shadow-2xl relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-80 h-80 bg-[#25D366]/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="flex flex-col md:flex-row items-center justify-between gap-6 relative z-10">
+          <div className="space-y-1.5 text-center md:text-left">
+            <div className="inline-flex items-center gap-2 text-xs font-black uppercase tracking-wider text-[#25D366]">
+              <WhatsAppIcon className="w-4 h-4" /> Official Event Channel
+            </div>
+            <h3 className="text-xl sm:text-2xl font-black text-white">
+              Join the Official TECHNEX 2K26 WhatsApp Group
+            </h3>
+            <p className="text-xs sm:text-sm text-[#FFF1DF]/90 max-w-xl leading-relaxed">
+              Connect with fellow participants, receive official problem statement releases, expo hall room allocations, and live schedule updates.
+            </p>
+          </div>
+          <a
+            href="https://chat.whatsapp.com/KFYW22NYGasBag1RZjnKJl"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="w-full md:w-auto px-7 py-3.5 rounded-2xl bg-[#25D366] hover:bg-[#20ba59] text-white font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2.5 shadow-xl shadow-[#25D366]/30 transition-all hover:scale-105 active:scale-95 shrink-0"
+          >
+            <WhatsAppIcon className="w-4 h-4 fill-current" />
+            JOIN WHATSAPP GROUP
+            <ExternalLink className="w-3.5 h-3.5" />
+          </a>
         </div>
       </div>
 
@@ -815,27 +654,27 @@ export default function TechnexPage() {
             )}
           </div>
 
-          {/* ── SECTION 5: Dynamic Registration Fee Summary & Payment Verification ── */}
+          {/* ── SECTION 5: Dynamic Registration Fee Summary & Submission ── */}
           <div className="pt-6 border-t border-brand-border space-y-6">
             <div className="flex items-center justify-between">
               <h3 className="text-base font-bold text-brand-orange uppercase tracking-wider flex items-center gap-2">
-                <ShieldCheck className="w-5 h-5 text-brand-yellow" /> 5. Payment & Registration Fee
+                <ShieldCheck className="w-5 h-5 text-brand-yellow" /> 5. Registration Fee &amp; Confirmation
               </h3>
             </div>
 
             {/* Dynamic Registration Fee Summary Card */}
-            <div className="p-5 rounded-2xl bg-background-elevated border border-brand-orange/30 space-y-3 shadow-lg">
-              <div className="flex items-center justify-between pb-2 border-b border-brand-border">
+            <div className="p-6 rounded-2xl bg-background-elevated border border-brand-orange/30 space-y-4 shadow-lg">
+              <div className="flex items-center justify-between pb-3 border-b border-brand-border">
                 <span className="text-xs font-bold text-brand-muted uppercase tracking-wider">
                   Registration Fee Summary
                 </span>
-                <span className="px-2.5 py-0.5 rounded text-[11px] font-bold bg-brand-orange/20 text-brand-yellow border border-brand-orange/30">
+                <span className="px-2.5 py-1 rounded-lg text-xs font-bold bg-brand-orange/20 text-brand-yellow border border-brand-orange/30">
                   {formData.membershipType}
                 </span>
               </div>
-              <div className="space-y-2 text-xs text-brand-secondary">
+              <div className="space-y-2.5 text-xs text-brand-secondary">
                 <div className="flex justify-between items-center">
-                  <span>Selected Category:</span>
+                  <span>Selected Membership Tier:</span>
                   <span className="font-semibold text-brand-white">
                     {formData.membershipType === "S4DS Member" ? "S4DS Student Chapter Member (₹49)" : "Non-S4DS General Participant (₹99)"}
                   </span>
@@ -846,211 +685,11 @@ export default function TechnexPage() {
                     1 Leader + {formData.teamMembers.length} Members ({1 + formData.teamMembers.length} Total)
                   </span>
                 </div>
-                <div className="flex justify-between items-center pt-2 border-t border-brand-border text-sm font-bold text-brand-white">
-                  <span>Total Payable Registration Fee:</span>
-                  <span className="text-brand-yellow text-2xl font-black font-mono">
+                <div className="flex justify-between items-center pt-3 border-t border-brand-border text-sm font-bold text-brand-white">
+                  <span>Applicable Registration Fee:</span>
+                  <span className="text-brand-yellow text-3xl font-black font-mono">
                     ₹{formData.registrationFee}
                   </span>
-                </div>
-              </div>
-            </div>
-
-            {/* ── DEDICATED PAYMENT QR SECTION: "SCAN & PAY" ── */}
-            <div className="p-6 rounded-3xl bg-background-card border-2 border-brand-orange/40 space-y-6 shadow-2xl relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-64 h-64 bg-brand-orange/5 rounded-full blur-3xl pointer-events-none" />
-
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-brand-border">
-                <div>
-                  <div className="flex items-center gap-2 text-brand-orange font-bold text-xs uppercase tracking-wider">
-                    <QrCode className="w-4 h-4" /> Official Payment Gateway
-                  </div>
-                  <h4 className="text-2xl font-black text-brand-white mt-0.5 flex items-center gap-2">
-                    Scan &amp; Pay
-                  </h4>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-xs text-brand-muted">Amount to Pay:</span>
-                  <span className="px-3 py-1 rounded-xl bg-brand-orange/20 text-brand-yellow font-black text-lg font-mono border border-brand-orange/40">
-                    ₹{formData.registrationFee}
-                  </span>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
-                {/* Official QR Code Box */}
-                <div className="md:col-span-5 flex flex-col items-center justify-center p-4 rounded-2xl bg-background-elevated border border-brand-border space-y-3">
-                  <div className="p-3 bg-white rounded-2xl shadow-xl border-2 border-brand-orange/30 flex items-center justify-center w-56 h-56 relative group">
-                    <img
-                      src={activePaymentQr?.fileUrl || qrCodeDataUrl || "/images/payment-qr.png"}
-                      alt="Official S4DS TECHNEX Payment QR Code"
-                      className="w-full h-full object-contain"
-                      onError={(e) => {
-                        e.currentTarget.onerror = null;
-                        e.currentTarget.src = "/images/payment-qr.png";
-                      }}
-                    />
-                  </div>
-                  <div className="text-center">
-                    <span className="text-[11px] font-bold text-brand-yellow block">
-                      Official S4DS Payment QR
-                    </span>
-                    <span className="text-[10px] text-brand-muted">
-                      Pre-configured for ₹{formData.registrationFee} • NPCI Verified
-                    </span>
-                  </div>
-
-                  {/* Direct Mobile UPI Intent Button */}
-                  <a
-                    href={`upi://pay?pa=${encodeURIComponent(upiId)}&pn=${encodeURIComponent("S4DS MITAOE")}&am=${formData.registrationFee}&cu=INR&tn=${encodeURIComponent("TECHNEX2K26 Registration")}`}
-                    className="sm:hidden w-full py-2 px-3 rounded-xl brand-btn text-white text-xs font-bold flex items-center justify-center gap-2 shadow-md"
-                  >
-                    <Smartphone className="w-3.5 h-3.5" /> Pay via UPI App Directly
-                  </a>
-                </div>
-
-                {/* Instructions & UPI Details */}
-                <div className="md:col-span-7 space-y-4">
-                  <div className="space-y-1">
-                    <h5 className="text-sm font-bold text-brand-white flex items-center gap-1.5">
-                      <Smartphone className="w-4 h-4 text-brand-orange" /> How to Pay via UPI
-                    </h5>
-                    <p className="text-xs text-brand-secondary leading-relaxed">
-                      Scan the official QR code using any supported UPI mobile application. Transfer exactly <strong className="text-brand-yellow">₹{formData.registrationFee}</strong> to complete your entry.
-                    </p>
-                  </div>
-
-                  {/* UPI ID Copy Card */}
-                  <div className="p-3 rounded-xl bg-background-elevated border border-brand-border flex items-center justify-between gap-3">
-                    <div className="space-y-0.5">
-                      <span className="text-[10px] uppercase font-bold text-brand-muted tracking-wider block">
-                        Official Chapter UPI ID:
-                      </span>
-                      <span className="text-xs font-mono font-bold text-brand-white">
-                        {upiId}
-                      </span>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={handleCopyUpi}
-                      className="px-3 py-1.5 rounded-lg bg-background-card hover:bg-background-secondary border border-brand-border text-xs text-brand-yellow hover:text-brand-white font-semibold flex items-center gap-1.5 transition-colors"
-                    >
-                      {copiedUpi ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-                      {copiedUpi ? "Copied" : "Copy"}
-                    </button>
-                  </div>
-
-                  {/* Supported UPI Apps */}
-                  <div className="space-y-1.5 pt-1">
-                    <span className="text-[10px] uppercase font-bold text-brand-muted tracking-wider block">
-                      Supported UPI Applications:
-                    </span>
-                    <div className="flex flex-wrap gap-1.5">
-                      {["Google Pay", "PhonePe", "Paytm", "BHIM UPI", "Amazon Pay", "CRED"].map((app) => (
-                        <span
-                          key={app}
-                          className="px-2 py-0.5 rounded text-[10px] font-medium bg-background-elevated border border-brand-border text-brand-secondary"
-                        >
-                          {app}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Verification Notice */}
-                  <div className="p-3 rounded-xl bg-brand-orange/10 border border-brand-orange/20 text-[11px] text-brand-muted space-y-1">
-                    <div className="flex items-center gap-1.5 text-brand-yellow font-bold text-xs">
-                      <Info className="w-3.5 h-3.5" /> Verification Process
-                    </div>
-                    <p>
-                      Initial payment status will be <strong>Pending Verification</strong>. Our administrator will verify your 12-digit UTR and payment screenshot within 24 hours.
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* ── PAYMENT CONFIRMATION FORM (UTR + Screenshot + Checkbox) ── */}
-            <div className="p-6 rounded-3xl bg-background-elevated border border-brand-border space-y-5">
-              <h4 className="text-sm font-bold text-brand-white uppercase tracking-wider flex items-center gap-2">
-                <CheckCircle2 className="w-4 h-4 text-emerald-400" /> Payment Confirmation &amp; Proof
-              </h4>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                {/* UTR Input */}
-                <div className="space-y-1.5 sm:col-span-2">
-                  <label className="text-xs font-semibold uppercase tracking-wider text-brand-secondary flex items-center justify-between">
-                    <span>UPI Transaction ID / UTR *</span>
-                    <span className="text-[10px] text-brand-muted font-normal lowercase">(12-digit reference number)</span>
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="e.g. 431987102938"
-                    value={formData.transactionId}
-                    onChange={(e) => setFormData({ ...formData, transactionId: e.target.value })}
-                    className="w-full px-4 py-3 rounded-xl bg-background-card border border-brand-border text-brand-white text-sm font-mono focus:outline-none focus:border-brand-orange"
-                  />
-                  <p className="text-[11px] text-brand-muted">
-                    Locate the 12-digit UTR/Transaction Reference number from your payment confirmation screen or bank SMS.
-                  </p>
-                </div>
-
-                {/* Screenshot Upload */}
-                <div className="space-y-2 sm:col-span-2">
-                  <label className="text-xs font-semibold uppercase tracking-wider text-brand-secondary flex items-center justify-between">
-                    <span>Upload Payment Screenshot (PNG/JPG/WEBP) *</span>
-                    <span className="text-[10px] text-rose-400 font-normal">Required for Verification</span>
-                  </label>
-                  <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-                    <label className="px-5 py-3 rounded-xl bg-background-card hover:bg-background-secondary border border-brand-border text-xs font-bold text-brand-secondary hover:text-brand-white cursor-pointer flex items-center justify-center gap-2 transition-colors shadow-sm">
-                      <Upload className="w-4 h-4 text-brand-orange" />
-                      {uploading ? "Uploading receipt..." : "Choose Payment Screenshot"}
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={handleFileUpload}
-                        className="hidden"
-                        disabled={uploading}
-                      />
-                    </label>
-
-                    {formData.paymentProofUrl ? (
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs text-emerald-400 flex items-center gap-1.5 font-bold">
-                          <CheckCircle2 className="w-4 h-4" /> Screenshot Attached
-                        </span>
-                        <a
-                          href={formData.paymentProofUrl}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="text-[11px] text-brand-orange hover:text-brand-yellow hover:underline flex items-center gap-1 font-semibold"
-                        >
-                          <ExternalLink className="w-3 h-3" /> View Uploaded File
-                        </a>
-                      </div>
-                    ) : (
-                      <span className="text-[11px] text-brand-muted italic">
-                        Please upload your payment receipt before submitting.
-                      </span>
-                    )}
-                  </div>
-                </div>
-
-                {/* Payment Confirmation Checkbox */}
-                <div className="sm:col-span-2 pt-2 border-t border-brand-border">
-                  <label className="flex items-start gap-3 cursor-pointer group">
-                    <input
-                      type="checkbox"
-                      id="paymentConfirmed"
-                      checked={paymentConfirmed}
-                      onChange={(e) => setPaymentConfirmed(e.target.checked)}
-                      className="mt-0.5 w-4 h-4 rounded border-brand-border text-brand-orange focus:ring-brand-orange focus:ring-offset-0 bg-background-card cursor-pointer accent-brand-orange"
-                      required
-                    />
-                    <span className="text-xs text-brand-secondary group-hover:text-brand-white transition-colors leading-relaxed">
-                      I confirm that I have transferred <strong className="text-brand-yellow">₹{formData.registrationFee}</strong> to the official S4DS chapter UPI ID (<code className="text-brand-white">{upiId}</code>) and that the UTR reference and payment screenshot provided above are authentic and genuine.
-                    </span>
-                  </label>
                 </div>
               </div>
             </div>
@@ -1058,14 +697,13 @@ export default function TechnexPage() {
 
           <button
             type="submit"
-            disabled={submitting || uploading}
+            disabled={submitting}
             className="w-full py-4 rounded-xl brand-btn text-white font-extrabold text-base transition-transform hover:scale-[1.01] shadow-xl shadow-brand-red/30 flex items-center justify-center gap-2 disabled:opacity-50"
           >
-            {submitting ? "Confirming Registration..." : `Complete TECHNEX 2K26 Registration (Pay ₹${formData.registrationFee})`}
+            {submitting ? "Submitting Registration..." : `Complete TECHNEX 2K26 Registration (${formData.membershipType}: ₹${formData.registrationFee})`}
           </button>
         </form>
       </div>
-
       {toast && <Toast {...toast} onClose={() => setToast(null)} />}
     </div>
   );

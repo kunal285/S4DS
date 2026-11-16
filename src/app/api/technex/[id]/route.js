@@ -26,10 +26,9 @@ export async function PATCH(request, { params }) {
 
     const { id } = await params;
     const body = await request.json();
-    const { status, paymentStatus } = body;
+    const { status } = body;
 
-    const validStatuses = ["Pending", "Approved", "Shortlisted", "Finalist", "Rejected"];
-    const validPaymentStatuses = ["Pending Verification", "Verified", "Rejected"];
+    const validStatuses = ["Pending", "Approved", "Shortlisted", "Finalist", "Rejected", "Successfully Registered"];
 
     const updates = {};
     if (status !== undefined) {
@@ -39,15 +38,8 @@ export async function PATCH(request, { params }) {
       updates.status = status;
     }
 
-    if (paymentStatus !== undefined) {
-      if (!validPaymentStatuses.includes(paymentStatus)) {
-        return NextResponse.json({ error: "Invalid paymentStatus value" }, { status: 400 });
-      }
-      updates.paymentStatus = paymentStatus;
-    }
-
     if (Object.keys(updates).length === 0) {
-      return NextResponse.json({ error: "No valid status or paymentStatus fields provided" }, { status: 400 });
+      return NextResponse.json({ error: "No valid status field provided" }, { status: 400 });
     }
 
     const updated = await updateTechnexStatus(id, updates);

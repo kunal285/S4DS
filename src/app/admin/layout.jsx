@@ -17,6 +17,7 @@ import {
   X,
   ExternalLink,
   FolderOpen,
+  Settings,
 } from "lucide-react";
 
 export default function AdminLayout({ children }) {
@@ -91,9 +92,9 @@ export default function AdminLayout({ children }) {
     { name: "Media Manager", href: "/admin/media", icon: FolderOpen },
     { name: "Events Manager", href: "/admin/events", icon: Calendar },
     { name: "Team Manager", href: "/admin/team", icon: Users },
-    { name: "Projects Manager", href: "/admin/projects", icon: Code2 },
     { name: "Gallery Manager", href: "/admin/gallery", icon: ImageIcon },
     { name: "Registrations", href: "/admin/registrations", icon: ClipboardList },
+    { name: "Settings", href: "/admin/settings", icon: Settings },
   ];
 
   return (
