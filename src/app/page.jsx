@@ -156,7 +156,7 @@ export default async function HomePage() {
                   <h3 className="text-lg font-bold text-brand-white">TECHNEX 2K26 Project Expo</h3>
                 </div>
                 <p className="text-sm text-brand-muted">
-                  Cash prize pool of ₹50,000+ • Direct incubation access • Evaluated by senior industry jury
+                  National project showcase • Direct incubation access • Evaluated by senior industry jury
                 </p>
               </div>
             </div>
@@ -366,13 +366,6 @@ export default async function HomePage() {
                     {evt.category}
                   </span>
                 </div>
-                {evt.prizePool && (
-                  <div className="absolute bottom-3 right-3">
-                    <span className="px-2.5 py-1 text-xs font-extrabold rounded-lg bg-brand-yellow text-slate-950 shadow-md">
-                      {evt.prizePool}
-                    </span>
-                  </div>
-                )}
               </div>
 
               <div className="p-6 flex-1 flex flex-col justify-between">
@@ -429,10 +422,6 @@ export default async function HomePage() {
                 algorithms, and research solutions before distinguished academic judges and industry tech leaders.
               </p>
               <div className="flex flex-wrap gap-4 pt-2">
-                <div className="px-4 py-2 rounded-xl bg-background-secondary border border-brand-border">
-                  <span className="text-xs text-brand-muted block">Prize Pool</span>
-                  <span className="text-lg font-extrabold text-brand-yellow">₹50,000+</span>
-                </div>
                 <div className="px-4 py-2 rounded-xl bg-background-secondary border border-brand-border">
                   <span className="text-xs text-brand-muted block">Expo Date</span>
                   <span className="text-lg font-extrabold text-brand-white">Nov 28, 2026</span>

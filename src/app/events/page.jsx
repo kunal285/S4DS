@@ -209,13 +209,6 @@ export default function EventsPage() {
                     <span className="truncate">{evt.venue}</span>
                   </div>
 
-                  {evt.prizePool && (
-                    <div className="flex items-center gap-1.5 text-xs text-brand-yellow font-semibold">
-                      <Award className="w-3.5 h-3.5 text-brand-orange" />
-                      <span>Prize: {evt.prizePool}</span>
-                    </div>
-                  )}
-
                   <div className="pt-2 flex items-center justify-between">
                     <button
                       onClick={() => setSelectedEvent(evt)}
@@ -288,15 +281,6 @@ export default function EventsPage() {
                 {selectedEvent.description}
               </p>
             </div>
-
-            {selectedEvent.prizePool && (
-              <div className="p-4 rounded-xl bg-brand-orange/10 border border-brand-orange/20 flex items-center gap-3 text-sm text-brand-yellow">
-                <Award className="w-5 h-5 text-brand-orange shrink-0" />
-                <div>
-                  <span className="font-bold">Prize Pool / Rewards:</span> {selectedEvent.prizePool}
-                </div>
-              </div>
-            )}
 
             <div className="flex justify-end gap-3 pt-4 border-t border-brand-border">
               <button

@@ -50,7 +50,7 @@ const getInitialSeedData = () => {
           "The premier annual flagship Project Expo and Competition organized by the Society for Data Science (S4DS) Student Chapter, MITAOE. Showcase breakthrough innovations across AI/ML, Web3, IoT, Cloud, and Software Engineering.",
         posterUrl: "/images/technex-poster.png",
         registrationDeadline: "2026-11-25",
-        prizePool: "₹50,000+",
+        prizePool: "",
         status: "Upcoming",
         isFeatured: true,
         createdAt: "2026-11-01T10:00:00.000Z",
