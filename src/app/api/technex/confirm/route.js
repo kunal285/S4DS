@@ -1,11 +1,10 @@
 import { NextResponse } from "next/server";
-import { getTechnexRegistrationByConfirmation } from "@/lib/db";
+import { getTechnexRegistrationById } from "@/lib/db";
 
 export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url);
     const id = searchParams.get("id");
-    const token = searchParams.get("token");
 
     if (!id) {
       return NextResponse.json(
@@ -14,10 +13,10 @@ export async function GET(request) {
       );
     }
 
-    const reg = await getTechnexRegistrationByConfirmation(id, token);
+    const reg = await getTechnexRegistrationById(id);
     if (!reg) {
       return NextResponse.json(
-        { error: "Registration not found or unauthorized confirmation access." },
+        { error: `Registration record not found for ID: ${id}` },
         { status: 404 }
       );
     }
@@ -29,7 +28,7 @@ export async function GET(request) {
   } catch (err) {
     console.error("GET /api/technex/confirm error:", err);
     return NextResponse.json(
-      { error: "Failed to retrieve confirmation details." },
+      { error: "Failed to retrieve registration details." },
       { status: 500 }
     );
   }

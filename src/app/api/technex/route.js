@@ -266,20 +266,29 @@ export async function POST(request) {
       status: "Approved",
     });
 
+    const finalRegId = newReg.registrationCode || newReg.registrationId || newReg.id;
+
     return NextResponse.json(
       {
         success: true,
         message: "Registration for TECHNEX 2K26 submitted successfully!",
-        registrationCode: newReg.registrationCode,
-        data: newReg,
+        registrationId: finalRegId,
+        registrationCode: finalRegId,
+        id: finalRegId,
+        data: {
+          ...newReg,
+          registrationId: finalRegId,
+          registrationCode: finalRegId,
+        },
       },
       { status: 201 }
     );
   } catch (err) {
     console.error("POST /api/technex error:", err);
+    const status = err.status || 500;
     return NextResponse.json(
-      { error: err.message || "Failed to process TECHNEX registration." },
-      { status: 500 }
+      { error: err.message || "Failed to process TECHNEX registration.", field: err.field },
+      { status }
     );
   }
 }

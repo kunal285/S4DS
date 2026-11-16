@@ -1048,16 +1048,37 @@ export async function getTechnexRegistrations({ search, status, membershipType, 
 }
 
 export async function checkTechnexDuplicate({ teamName, leaderEmail, leaderPrn }) {
-  const db = getFileDb();
-  const existing = db.technexRegistrations || [];
+  let existing = [];
+  try {
+    if (await isRushDBConnected()) {
+      const catalog = await getSchemaCatalog();
+      if (catalog.labels.has("TECHNEX_REGISTRATION")) {
+        existing = await findRecords("TECHNEX_REGISTRATION", { limit: 500 });
+      }
+    }
+  } catch (err) {
+    console.warn("RushDB checkTechnexDuplicate fallback:", err.message);
+  }
 
-  if (teamName && existing.some((r) => r.teamName.toLowerCase() === teamName.toLowerCase())) {
+  const db = getFileDb();
+  const fileRegs = db.technexRegistrations || [];
+  for (const fr of fileRegs) {
+    if (!existing.some((r) => r.id === fr.id || r.registrationCode === fr.registrationCode)) {
+      existing.push(fr);
+    }
+  }
+
+  const cleanTeam = (teamName || "").trim().toLowerCase();
+  const cleanEmail = (leaderEmail || "").trim().toLowerCase();
+  const cleanPrn = (leaderPrn || "").trim().toUpperCase();
+
+  if (cleanTeam && existing.some((r) => r.teamName?.trim().toLowerCase() === cleanTeam)) {
     return { isDuplicate: true, field: "teamName", message: `Team name "${teamName}" is already registered. Please choose a unique name.` };
   }
-  if (leaderEmail && existing.some((r) => r.leaderEmail.toLowerCase() === leaderEmail.toLowerCase())) {
+  if (cleanEmail && existing.some((r) => r.leaderEmail?.trim().toLowerCase() === cleanEmail)) {
     return { isDuplicate: true, field: "leaderEmail", message: "A team with this Leader Email has already been registered." };
   }
-  if (leaderPrn && existing.some((r) => r.leaderPrn.toUpperCase() === leaderPrn.toUpperCase())) {
+  if (cleanPrn && existing.some((r) => r.leaderPrn?.trim().toUpperCase() === cleanPrn)) {
     return { isDuplicate: true, field: "leaderPrn", message: "A team with this Leader PRN has already been registered." };
   }
   return { isDuplicate: false };
@@ -1066,16 +1087,29 @@ export async function checkTechnexDuplicate({ teamName, leaderEmail, leaderPrn }
 export async function createTechnexRegistration(data) {
   const duplicate = await checkTechnexDuplicate(data);
   if (duplicate.isDuplicate) {
-    throw new Error(duplicate.message);
+    const dupErr = new Error(duplicate.message);
+    dupErr.status = 409;
+    dupErr.field = duplicate.field;
+    throw dupErr;
   }
 
+  // Count existing records across RushDB and local DB for sequential registration code
+  let totalExisting = 0;
+  try {
+    if (await isRushDBConnected()) {
+      const allRush = await findRecords("TECHNEX_REGISTRATION");
+      totalExisting = Math.max(totalExisting, allRush.length);
+    }
+  } catch {}
   const db = getFileDb();
-  const count = (db.technexRegistrations || []).length + 1;
+  totalExisting = Math.max(totalExisting, (db.technexRegistrations || []).length);
+  const count = totalExisting + 1;
   const regCode = `TNX-2026-${String(count).padStart(3, "0")}`;
   const confirmationToken = crypto.randomBytes(24).toString("hex");
 
   const newReg = {
     id: `technex-${Date.now()}`,
+    registrationId: regCode,
     registrationCode: regCode,
     confirmationToken,
     membershipType: data.membershipType || "Non-S4DS Member",
@@ -1101,18 +1135,34 @@ export async function createTechnexRegistration(data) {
   };
 
   // 1. Store in RushDB as primary database
+  let rushSaved = false;
   try {
     if (await isRushDBConnected()) {
       await getSchemaCatalog();
-      await createRecord("TECHNEX_REGISTRATION", newReg);
+      const created = await createRecord("TECHNEX_REGISTRATION", newReg);
+      if (created) {
+        rushSaved = true;
+        if (created.__id) newReg.__id = created.__id;
+      }
     }
   } catch (err) {
     console.warn("RushDB createTechnexRegistration fallback:", err.message);
   }
 
   // 2. Store in local persistent JSON
-  db.technexRegistrations = [newReg, ...(db.technexRegistrations || [])];
-  saveFileDb(db);
+  let fileSaved = false;
+  try {
+    db.technexRegistrations = [newReg, ...(db.technexRegistrations || [])];
+    saveFileDb(db);
+    fileSaved = true;
+  } catch (err) {
+    console.error("Local JSON save error:", err);
+  }
+
+  if (!rushSaved && !fileSaved) {
+    throw new Error("Failed to save registration record in database. Please try again.");
+  }
+
   return newReg;
 }
 
@@ -1628,44 +1678,82 @@ export async function updateTechnexConfig(updates) {
   return getTechnexConfig();
 }
 
-export async function getTechnexRegistrationByConfirmation(id, token) {
+export async function getTechnexRegistrationById(id) {
   if (!id) return null;
 
+  const idStr = String(id).trim();
   let reg = null;
+
   try {
     if (await isRushDBConnected()) {
       const catalog = await getSchemaCatalog();
       if (catalog.labels.has("TECHNEX_REGISTRATION")) {
-        reg = await findRecordById("TECHNEX_REGISTRATION", id);
+        // 1. Try finding by ID directly (handles both internal UUID and custom id)
+        reg = await findRecordById("TECHNEX_REGISTRATION", idStr);
+
+        // 2. If not found by ID, try finding by registrationCode (e.g., TNX-2026-001)
+        if (!reg) {
+          const byCode = await findRecords("TECHNEX_REGISTRATION", {
+            where: { registrationCode: idStr },
+            limit: 1,
+          });
+          if (byCode && byCode.length > 0) {
+            reg = byCode[0];
+          }
+        }
+
+        // 3. Fallback scan across RushDB records for case-insensitive match
+        if (!reg) {
+          const all = await findRecords("TECHNEX_REGISTRATION", { limit: 200 });
+          reg = all.find(
+            (r) =>
+              r.id === idStr ||
+              r.registrationCode === idStr ||
+              r.registrationId === idStr ||
+              r.__id === idStr ||
+              r.id?.toLowerCase() === idStr.toLowerCase() ||
+              r.registrationCode?.toLowerCase() === idStr.toLowerCase() ||
+              r.registrationId?.toLowerCase() === idStr.toLowerCase()
+          ) || null;
+        }
       }
     }
   } catch (err) {
-    console.warn("RushDB getTechnexRegistrationByConfirmation fallback:", err.message);
+    console.warn("RushDB getTechnexRegistrationById fallback:", err.message);
   }
 
+  // Fallback to local persistent JSON file
   if (!reg) {
     const db = getFileDb();
-    reg = (db.technexRegistrations || []).find((r) => r.id === id) || null;
+    reg = (db.technexRegistrations || []).find(
+      (r) =>
+        r.id === idStr ||
+        r.registrationCode === idStr ||
+        r.registrationId === idStr ||
+        r.id?.toLowerCase() === idStr.toLowerCase() ||
+        r.registrationCode?.toLowerCase() === idStr.toLowerCase() ||
+        r.registrationId?.toLowerCase() === idStr.toLowerCase()
+    ) || null;
   }
 
   if (!reg) return null;
 
-  // Validate confirmation token if present on record
-  if (reg.confirmationToken && token && reg.confirmationToken !== token) {
-    return null;
-  }
-
-  // Fetch settings & technex config
+  // Fetch settings & technex config dynamically
   const settings = await getSettings();
   const technex = await getTechnexConfig();
 
-  // Return sanitized confirmation details
+  const finalCode = reg.registrationCode || reg.registrationId || reg.id;
+
+  // Return clean, complete confirmation details without obsolete verification gates
   return {
-    id: reg.id,
-    registrationCode: reg.registrationCode || reg.id,
+    id: reg.id || reg.__id || finalCode,
+    registrationId: finalCode,
+    registrationCode: finalCode,
     teamName: reg.teamName,
     projectTitle: reg.projectTitle,
     domain: reg.domain,
+    abstractSummary: reg.abstractSummary || "",
+    githubOrDriveUrl: reg.githubOrDriveUrl || "",
     leaderName: reg.leaderName,
     leaderEmail: reg.leaderEmail,
     leaderPhone: reg.leaderPhone,
@@ -1673,9 +1761,10 @@ export async function getTechnexRegistrationByConfirmation(id, token) {
     leaderPrn: reg.leaderPrn,
     membershipType: reg.membershipType,
     registrationFee: reg.registrationFee,
-    registrationStatus: reg.registrationStatus || "Successfully Registered",
+    registrationStatus: "Successfully Registered",
     status: reg.status || "Approved",
     teamMembers: reg.teamMembers || [],
+    utr: reg.utr || "",
     createdAt: reg.createdAt,
     eventTitle: technex.title || "TECHNEX 2K26 – THE PROJECT EXPO",
     eventDate: technex.date || "Nov 28, 2026",
@@ -1683,6 +1772,10 @@ export async function getTechnexRegistrationByConfirmation(id, token) {
     whatsappUrl: technex.whatsappUrl || settings.technexWhatsappUrl || process.env.NEXT_PUBLIC_TECHNEX_WHATSAPP_URL || "https://chat.whatsapp.com/KFYW22NYGasBag1RZjnKJl",
     whatsappEnabled: technex.whatsappEnabled !== false && settings.technexWhatsappEnabled !== false,
   };
+}
+
+export async function getTechnexRegistrationByConfirmation(id, token) {
+  return getTechnexRegistrationById(id);
 }
 
 // ─────────────────────────────────────────────

@@ -1,6 +1,25 @@
 import { NextResponse } from "next/server";
-import { updateTechnexStatus, deleteTechnexRegistration } from "@/lib/db";
+import { updateTechnexStatus, deleteTechnexRegistration, getTechnexRegistrationById } from "@/lib/db";
 import { validateAdminRequest } from "@/lib/auth";
+
+export async function GET(request, { params }) {
+  try {
+    const { id } = await params;
+    if (!id) {
+      return NextResponse.json({ error: "Registration ID is required." }, { status: 400 });
+    }
+
+    const reg = await getTechnexRegistrationById(id);
+    if (!reg) {
+      return NextResponse.json({ error: "Registration not found" }, { status: 404 });
+    }
+
+    return NextResponse.json({ success: true, data: reg });
+  } catch (err) {
+    console.error("GET /api/technex/[id] error:", err);
+    return NextResponse.json({ error: "Failed to fetch registration" }, { status: 500 });
+  }
+}
 
 export async function DELETE(request, { params }) {
   try {

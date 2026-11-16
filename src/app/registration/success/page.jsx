@@ -23,7 +23,6 @@ import {
 function SuccessContent() {
   const searchParams = useSearchParams();
   const id = searchParams.get("id");
-  const token = searchParams.get("token");
 
   const [registration, setRegistration] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -32,21 +31,20 @@ function SuccessContent() {
 
   useEffect(() => {
     if (!id) {
-      setError("Registration ID is missing. Please check your confirmation link.");
+      setError("Registration ID is missing. Please check your confirmation link or submit a registration.");
       setLoading(false);
       return;
     }
 
-    const fetchUrl = token
-      ? `/api/technex/confirm?id=${encodeURIComponent(id)}&token=${encodeURIComponent(token)}`
-      : `/api/technex/confirm?id=${encodeURIComponent(id)}`;
+    const fetchUrl = `/api/technex/confirm?id=${encodeURIComponent(id)}`;
 
     fetch(fetchUrl)
-      .then((res) => {
+      .then(async (res) => {
+        const json = await res.json();
         if (!res.ok) {
-          throw new Error("Registration not found or unauthorized access.");
+          throw new Error(json.error || "Registration record not found.");
         }
-        return res.json();
+        return json;
       })
       .then((json) => {
         if (json.success && json.data) {
@@ -61,11 +59,11 @@ function SuccessContent() {
       .finally(() => {
         setLoading(false);
       });
-  }, [id, token]);
+  }, [id]);
 
   const handleCopyCode = () => {
     if (!registration) return;
-    const code = registration.registrationCode || registration.id;
+    const code = registration.registrationCode || registration.registrationId || registration.id;
     if (typeof navigator !== "undefined" && navigator.clipboard) {
       navigator.clipboard.writeText(code);
       setCopied(true);
@@ -84,7 +82,7 @@ function SuccessContent() {
       <div className="min-h-[70vh] flex flex-col items-center justify-center space-y-4 px-4 text-center">
         <div className="w-12 h-12 border-4 border-brand-orange border-t-transparent rounded-full animate-spin" />
         <p className="text-sm text-brand-secondary font-semibold">
-          Verifying registration credentials with RushDB...
+          Loading registration details...
         </p>
       </div>
     );
@@ -98,10 +96,10 @@ function SuccessContent() {
             <AlertTriangle className="w-8 h-8" />
           </div>
           <h1 className="text-2xl sm:text-3xl font-black text-white">
-            Registration Verification Error
+            Registration Not Found
           </h1>
           <p className="text-sm text-brand-muted max-w-md mx-auto leading-relaxed">
-            {error || "The requested registration record could not be securely verified."}
+            {error || "We could not find a registration matching this ID. Please verify your Registration ID or contact the organizing committee."}
           </p>
           <div className="flex flex-wrap justify-center gap-4 pt-2">
             <Link
@@ -224,7 +222,7 @@ function SuccessContent() {
             </span>
             <div className="flex items-center gap-3 mt-1">
               <span className="text-2xl sm:text-3xl font-mono font-black text-white tracking-wider">
-                {registration.registrationCode || registration.id}
+                {registration.registrationCode || registration.registrationId || registration.id}
               </span>
               <button
                 onClick={handleCopyCode}
