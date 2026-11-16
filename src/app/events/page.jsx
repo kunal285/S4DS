@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { isRouteLive } from "@/config/site-mode";
 import UnderDevelopment from "@/components/UnderDevelopment";
 import {
   Calendar,
@@ -20,9 +19,8 @@ import LoadingSkeleton from "@/components/LoadingSkeleton";
 import EmptyState from "@/components/EmptyState";
 
 export default function EventsPage() {
-  if (!isRouteLive("/events")) {
-    return <UnderDevelopment section="Events & Workshops" />;
-  }
+  const [isLive, setIsLive] = useState(false);
+  const [checkingMode, setCheckingMode] = useState(true);
 
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -36,8 +34,35 @@ export default function EventsPage() {
   const statuses = ["All", "Upcoming", "Completed"];
 
   useEffect(() => {
-    fetchEvents();
-  }, [category, status]);
+    fetch("/api/settings")
+      .then((r) => r.json())
+      .then((json) => {
+        if (json.success && json.data) {
+          setIsLive(Boolean(json.data.pageAvailability?.events));
+        }
+      })
+      .catch(() => setIsLive(false))
+      .finally(() => setCheckingMode(false));
+  }, []);
+
+  useEffect(() => {
+    if (isLive) {
+      fetchEvents();
+    }
+  }, [category, status, isLive]);
+
+  if (checkingMode) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 flex flex-col items-center justify-center space-y-3">
+        <div className="w-8 h-8 border-3 border-brand-orange border-t-transparent rounded-full animate-spin" />
+        <p className="text-xs text-brand-muted">Loading events portal...</p>
+      </div>
+    );
+  }
+
+  if (!isLive) {
+    return <UnderDevelopment section="Events & Workshops" />;
+  }
 
   const fetchEvents = async () => {
     setLoading(true);

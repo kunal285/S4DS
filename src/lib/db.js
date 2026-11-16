@@ -1094,6 +1094,7 @@ export async function createTechnexRegistration(data) {
     utr: (data.utr || data.upiTransactionId || "").trim(),
     paymentScreenshotUrl: data.paymentScreenshotUrl || "",
     paymentScreenshotPath: data.paymentScreenshotPath || "",
+    paymentScreenshotMediaId: data.paymentScreenshotMediaId || null,
     registrationStatus: "Successfully Registered",
     status: data.status || "Approved",
     createdAt: new Date().toISOString(),
@@ -1350,13 +1351,178 @@ export async function getActivePaymentQr() {
 // ─────────────────────────────────────────────
 // WEBSITE SETTINGS (TECHNEX & Chapter Settings)
 // ─────────────────────────────────────────────
-export async function getSettings() {
-  const defaultSettings = {
-    activePaymentQrId: null,
+export function getDefaultSettings() {
+  return {
+    id: "site-settings",
+    websiteName: "S4DS MITAOE",
+    websiteTagline: "Think. Analyze. Innovate.",
+    websiteDescription:
+      "Society for Data Science Student Chapter at MIT Academy of Engineering, Alandi, Pune. Nurturing innovation, machine learning mastery, and data science leadership.",
+    logoUrl: "/images/logo.png",
+    logoMediaId: null,
+    contactEmail: process.env.NEXT_PUBLIC_CHAPTER_EMAIL || "s4ds.datascience@mitaoe.ac.in",
+    contactPhone: "+91 98765 43210",
+    contactAddress: "MIT Academy of Engineering, Dehu Phata, Alandi (D), Pune, Maharashtra 412105",
+    contactCoordinates: "Alandi (D), Pune - 412105",
+    socialLinks: {
+      linkedin: "https://linkedin.com",
+      github: "https://github.com/kunal285/S4DS",
+      instagram: "https://instagram.com",
+      twitter: "https://twitter.com",
+      discord: "https://discord.com",
+      website: "https://mitaoe.ac.in",
+    },
+    footerText:
+      "Society for Data Science Student Chapter at MIT Academy of Engineering, Alandi, Pune. Nurturing innovation, machine learning mastery, and data science leadership.",
+    copyrightText: "© 2026 S4DS MITAOE Student Chapter. All rights reserved.",
+
+    homepage: {
+      heroHeadline: "Something Extraordinary Is Brewing.",
+      heroTagline: "Think. Analyze. Innovate.",
+      heroDescription:
+        "We're building a digital home for curious minds, data enthusiasts and future innovators. Our new website is currently under development. Stay connected with S4DS MITAOE.",
+      heroBadgeText: "Official Launch Countdown",
+      roadmapHeading: "Upcoming Chapter Highlights",
+      roadmapSubheading:
+        "Here is a sneak peek at what is arriving with the official S4DS MITAOE complete web platform.",
+      previewCards: [
+        {
+          title: "Workshops & Hackathons",
+          tag: "Coming Soon",
+          desc: "Hands-on masterclasses in Generative AI, PyTorch, BigQuery, and full-stack data apps.",
+          href: "/events",
+          iconName: "Database",
+        },
+        {
+          title: "Executive Team & Faculty",
+          tag: "Coming Soon",
+          desc: "Meet our student core team, faculty mentors, and advisory board driving chapter initiatives.",
+          href: "/team",
+          iconName: "Users",
+        },
+        {
+          title: "Annual Event Gallery",
+          tag: "Coming Soon",
+          desc: "Curated high-resolution archives of campus exhibitions, speaker sessions, and project showcases.",
+          href: "/gallery",
+          iconName: "Layers",
+        },
+        {
+          title: "Chapter Membership Hub",
+          tag: "Coming Soon",
+          desc: "Exclusive member benefits, discount passes, community discord, and technical certification track.",
+          href: "/membership",
+          iconName: "Sparkles",
+        },
+      ],
+    },
+
+    about: {
+      headline: "Pioneering Data Science & Artificial Intelligence Excellence",
+      story:
+        "The Society for Data Science (S4DS) Student Chapter at MIT Academy of Engineering was founded to bridge the gap between academic theory and real-world data science, machine learning, and artificial intelligence applications. We cultivate a collaborative ecosystem of student developers, researchers, and tech pioneers.",
+      mission:
+        "To empower students with deep theoretical understanding and production-grade hands-on engineering skills in data science, artificial intelligence, and cutting-edge software engineering.",
+      vision:
+        "To be a premier student-led hub producing world-class data scientists, researchers, and innovators who solve impactful real-world challenges.",
+      facultyCoordinator: "Prof. Aparna Kulkarni",
+      facultyDepartment: "Department of Computer Engineering (Data Science)",
+      facultyCollege: "MIT Academy of Engineering, Pune",
+      facultyBio:
+        "Assistant Professor in Computer Science & Engineering (Data Science) guiding the S4DS student chapter and driving academic innovation.",
+      stats: [
+        { label: "Active Members", value: "250+" },
+        { label: "Workshops & Seminars", value: "35+" },
+        { label: "Hackathons & Challenges", value: "12+" },
+        { label: "Projects Incubated", value: "40+" },
+      ],
+    },
+
+    technex: {
+      title: "TECHNEX 2K26 – THE PROJECT EXPO",
+      tagline: "National Flagship Project Exhibition & Competition",
+      description:
+        "The premier annual flagship Project Expo and Competition organized by the Society for Data Science (S4DS) Student Chapter, MITAOE. Showcase breakthrough innovations across AI/ML, Web3, IoT, Cloud, and Software Engineering.",
+      date: "2026-11-28",
+      time: "09:00 AM - 05:00 PM IST",
+      venue: "MIT Academy of Engineering Campus & Central Auditorium, Alandi, Pune",
+      mode: "Offline / In-Person",
+      posterUrl:
+        "https://cflqsjjkekfrnjjbhuja.supabase.co/storage/v1/object/public/s4ds-media/events/posters/1794862447532_TECHNEX_2K26_Project_Expo_Poster__2_.png",
+      posterMediaId: "media-1794862449757-g1b7",
+      minTeamSize: 1,
+      maxTeamSize: 4,
+      registrationOpen: true,
+      registrationDeadline: "2026-11-25T23:59:59",
+      whatsappUrl: "https://chat.whatsapp.com/KFYW22NYGasBag1RZjnKJl",
+      whatsappEnabled: true,
+      paymentInstructions:
+        "1. Scan the official S4DS UPI QR code below using any UPI app (GPay, PhonePe, Paytm).\n2. Enter the exact registration fee shown for your membership category.\n3. Note down the 12-digit UPI Transaction ID / UTR.\n4. Take a clear screenshot of the completed payment and upload it below.",
+      activePaymentQrId: "media-1794863268432-zvv7",
+      activePaymentQrUrl:
+        "https://cflqsjjkekfrnjjbhuja.supabase.co/storage/v1/object/public/s4ds-media/payment/qr-codes/1794863268060_s4ds-official-technex-qr.png",
+      membershipTiers: [
+        { id: "s4ds", name: "S4DS Member", fee: 49, description: "Active S4DS Chapter Member (PRN required)" },
+        { id: "non-s4ds", name: "Non-S4DS Member", fee: 99, description: "Student from MITAOE or other recognized colleges" },
+      ],
+      domains: [
+        "Artificial Intelligence & ML",
+        "Data Science & Predictive Analytics",
+        "Web3 & Decentralized Apps",
+        "IoT, Robotics & Embedded Systems",
+        "Cloud Architecture & DevOps",
+        "Open Track: Interdisciplinary Innovation",
+      ],
+    },
+
+    announcement: {
+      enabled: true,
+      text: "🚀 Registrations are LIVE for TECHNEX 2K26 – National Project Expo!",
+      link: "/technex-2k26",
+    },
+
+    activePaymentQrId: "media-1794863268432-zvv7",
     activeBannerId: null,
-    technexWhatsappUrl: process.env.NEXT_PUBLIC_TECHNEX_WHATSAPP_URL || "https://chat.whatsapp.com/KFYW22NYGasBag1RZjnKJl",
+    technexWhatsappUrl: "https://chat.whatsapp.com/KFYW22NYGasBag1RZjnKJl",
     technexWhatsappEnabled: true,
+
+    launchMode: true,
+    pageAvailability: {
+      home: true,
+      technex: true,
+      contact: true,
+      about: false,
+      events: false,
+      team: false,
+      gallery: false,
+      projects: false,
+      membership: false,
+    },
   };
+}
+
+function deepMerge(target, source) {
+  if (!source || typeof source !== "object") return target;
+  const output = { ...target };
+  for (const key of Object.keys(source)) {
+    if (
+      source[key] &&
+      typeof source[key] === "object" &&
+      !Array.isArray(source[key]) &&
+      target[key] &&
+      typeof target[key] === "object" &&
+      !Array.isArray(target[key])
+    ) {
+      output[key] = deepMerge(target[key], source[key]);
+    } else {
+      output[key] = source[key];
+    }
+  }
+  return output;
+}
+
+export async function getSettings() {
+  const defaultSettings = getDefaultSettings();
 
   try {
     if (await isRushDBConnected()) {
@@ -1364,7 +1530,7 @@ export async function getSettings() {
       if (catalog.labels.has("SETTING")) {
         const list = await findRecords("SETTING", { limit: 1 });
         if (list && list.length > 0) {
-          return { ...defaultSettings, ...list[0] };
+          return deepMerge(defaultSettings, list[0]);
         }
       }
     }
@@ -1373,12 +1539,12 @@ export async function getSettings() {
   }
 
   const db = getFileDb();
-  return { ...defaultSettings, ...(db.settings || {}) };
+  return deepMerge(defaultSettings, db.settings || {});
 }
 
 export async function updateSettings(updates) {
   const current = await getSettings();
-  const merged = { ...current, ...updates };
+  const merged = deepMerge(current, updates);
 
   try {
     if (await isRushDBConnected()) {
@@ -1398,6 +1564,68 @@ export async function updateSettings(updates) {
   db.settings = merged;
   saveFileDb(db);
   return merged;
+}
+
+export async function getTechnexConfig() {
+  const settings = await getSettings();
+  const technex = { ...settings.technex };
+
+  // Resolve dynamic Payment QR reference from MEDIA_ITEM if configured
+  if (technex.activePaymentQrId || settings.activePaymentQrId) {
+    const qrId = technex.activePaymentQrId || settings.activePaymentQrId;
+    const qrMedia = await getMediaItemById(qrId);
+    if (qrMedia && qrMedia.fileUrl) {
+      technex.activePaymentQrUrl = qrMedia.fileUrl;
+      technex.activePaymentQrId = qrMedia.id;
+    }
+  }
+
+  if (!technex.activePaymentQrUrl) {
+    const activeMedia = await getActiveMediaItem("payment-qr");
+    if (activeMedia && activeMedia.fileUrl) {
+      technex.activePaymentQrUrl = activeMedia.fileUrl;
+      technex.activePaymentQrId = activeMedia.id;
+    }
+  }
+
+  // Resolve dynamic Event Poster reference from MEDIA_ITEM if configured
+  if (technex.posterMediaId) {
+    const posterMedia = await getMediaItemById(technex.posterMediaId);
+    if (posterMedia && posterMedia.fileUrl) {
+      technex.posterUrl = posterMedia.fileUrl;
+    }
+  }
+
+  // Sync WhatsApp configuration
+  if (settings.technexWhatsappUrl) {
+    technex.whatsappUrl = settings.technexWhatsappUrl;
+    technex.whatsappEnabled = settings.technexWhatsappEnabled !== false;
+  }
+
+  return technex;
+}
+
+export async function updateTechnexConfig(updates) {
+  const currentSettings = await getSettings();
+  const mergedTechnex = deepMerge(currentSettings.technex, updates);
+
+  // Sync top-level settings fields if technex updates them
+  const topLevelUpdates = {
+    technex: mergedTechnex,
+  };
+
+  if (updates.whatsappUrl) {
+    topLevelUpdates.technexWhatsappUrl = updates.whatsappUrl;
+  }
+  if (updates.whatsappEnabled !== undefined) {
+    topLevelUpdates.technexWhatsappEnabled = Boolean(updates.whatsappEnabled);
+  }
+  if (updates.activePaymentQrId) {
+    topLevelUpdates.activePaymentQrId = updates.activePaymentQrId;
+  }
+
+  await updateSettings(topLevelUpdates);
+  return getTechnexConfig();
 }
 
 export async function getTechnexRegistrationByConfirmation(id, token) {
@@ -1427,8 +1655,9 @@ export async function getTechnexRegistrationByConfirmation(id, token) {
     return null;
   }
 
-  // Fetch settings for WhatsApp group link
+  // Fetch settings & technex config
   const settings = await getSettings();
+  const technex = await getTechnexConfig();
 
   // Return sanitized confirmation details
   return {
@@ -1448,8 +1677,11 @@ export async function getTechnexRegistrationByConfirmation(id, token) {
     status: reg.status || "Approved",
     teamMembers: reg.teamMembers || [],
     createdAt: reg.createdAt,
-    whatsappUrl: settings.technexWhatsappUrl || process.env.NEXT_PUBLIC_TECHNEX_WHATSAPP_URL || "https://chat.whatsapp.com/KFYW22NYGasBag1RZjnKJl",
-    whatsappEnabled: settings.technexWhatsappEnabled !== false,
+    eventTitle: technex.title || "TECHNEX 2K26 – THE PROJECT EXPO",
+    eventDate: technex.date || "Nov 28, 2026",
+    eventVenue: technex.venue || "MITAOE Campus, Alandi, Pune",
+    whatsappUrl: technex.whatsappUrl || settings.technexWhatsappUrl || process.env.NEXT_PUBLIC_TECHNEX_WHATSAPP_URL || "https://chat.whatsapp.com/KFYW22NYGasBag1RZjnKJl",
+    whatsappEnabled: technex.whatsappEnabled !== false && settings.technexWhatsappEnabled !== false,
   };
 }
 

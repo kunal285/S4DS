@@ -34,6 +34,10 @@ export async function PUT(request, { params }) {
   }
 }
 
+export async function PATCH(request, ctx) {
+  return PUT(request, ctx);
+}
+
 export async function DELETE(request, { params }) {
   try {
     const admin = validateAdminRequest(request);

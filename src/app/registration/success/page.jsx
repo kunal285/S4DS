@@ -163,21 +163,21 @@ function SuccessContent() {
           <Sparkles className="w-6 h-6 text-brand-yellow shrink-0" />
           <div>
             <span className="text-[10px] uppercase font-bold text-[#B8A99A] block">Event</span>
-            <span className="text-xs sm:text-sm font-bold text-white">TECHNEX 2K26 Expo</span>
+            <span className="text-xs sm:text-sm font-bold text-white">{registration.eventTitle || "TECHNEX 2K26 Expo"}</span>
           </div>
         </div>
         <div className="p-4 rounded-2xl bg-[#17110D] border border-[rgba(252,135,6,0.25)] flex items-center gap-3 shadow-md">
           <Calendar className="w-6 h-6 text-brand-orange shrink-0" />
           <div>
             <span className="text-[10px] uppercase font-bold text-[#B8A99A] block">Expo Date</span>
-            <span className="text-xs sm:text-sm font-bold text-white">Nov 21, 2026</span>
+            <span className="text-xs sm:text-sm font-bold text-white">{registration.eventDate || "Nov 28, 2026"}</span>
           </div>
         </div>
         <div className="p-4 rounded-2xl bg-[#17110D] border border-[rgba(252,135,6,0.25)] flex items-center gap-3 shadow-md">
           <MapPin className="w-6 h-6 text-brand-yellow shrink-0" />
           <div>
             <span className="text-[10px] uppercase font-bold text-[#B8A99A] block">Campus Venue</span>
-            <span className="text-xs sm:text-sm font-bold text-white">MITAOE, Alandi, Pune</span>
+            <span className="text-xs sm:text-sm font-bold text-white">{registration.eventVenue || "MITAOE, Alandi, Pune"}</span>
           </div>
         </div>
       </div>

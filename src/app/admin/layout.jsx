@@ -18,6 +18,7 @@ import {
   ExternalLink,
   FolderOpen,
   Settings,
+  Flame,
 } from "lucide-react";
 
 export default function AdminLayout({ children }) {
@@ -89,8 +90,10 @@ export default function AdminLayout({ children }) {
 
   const navItems = [
     { name: "Overview", href: "/admin", icon: LayoutDashboard },
+    { name: "TECHNEX CMS", href: "/admin/technex", icon: Flame },
     { name: "Media Manager", href: "/admin/media", icon: FolderOpen },
     { name: "Events Manager", href: "/admin/events", icon: Calendar },
+    { name: "Projects Manager", href: "/admin/projects", icon: Code2 },
     { name: "Team Manager", href: "/admin/team", icon: Users },
     { name: "Gallery Manager", href: "/admin/gallery", icon: ImageIcon },
     { name: "Registrations", href: "/admin/registrations", icon: ClipboardList },

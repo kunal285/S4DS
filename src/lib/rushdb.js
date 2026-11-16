@@ -154,6 +154,42 @@ export async function validateFieldsExist(label, fields = []) {
 }
 
 /**
+ * Serializes nested objects and arrays into JSON strings so RushDB properties remain flat primitives.
+ */
+export function serializeForRushDB(obj) {
+  if (!obj || typeof obj !== "object") return obj;
+  const flat = {};
+  for (const [key, val] of Object.entries(obj)) {
+    if (val !== null && typeof val === "object") {
+      flat[key] = JSON.stringify(val);
+    } else {
+      flat[key] = val;
+    }
+  }
+  return flat;
+}
+
+/**
+ * Deserializes JSON strings back into nested objects and arrays when reading from RushDB.
+ */
+export function deserializeFromRushDB(obj) {
+  if (!obj || typeof obj !== "object") return obj;
+  const out = {};
+  for (const [key, val] of Object.entries(obj)) {
+    if (typeof val === "string" && (val.startsWith("{") || val.startsWith("["))) {
+      try {
+        out[key] = JSON.parse(val);
+      } catch {
+        out[key] = val;
+      }
+    } else {
+      out[key] = val;
+    }
+  }
+  return out;
+}
+
+/**
  * Safe Record Finder enforcing schema-first discovery.
  */
 export async function findRecords(label, options = {}) {
@@ -180,7 +216,10 @@ export async function findRecords(label, options = {}) {
   const result = await client.records.find(queryPayload);
   const records = Array.isArray(result) ? result : result?.data || [];
 
-  return records.map((r) => (r.data ? { id: r.id, ...r.data } : r));
+  return records.map((r) => {
+    const raw = r.data ? { id: r.id, ...r.data } : r;
+    return deserializeFromRushDB(raw);
+  });
 }
 
 /**
@@ -197,7 +236,8 @@ export async function findRecordById(label, id) {
     try {
       const direct = await client.records.findById(id);
       if (direct) {
-        return direct.data ? { id: direct.id, ...direct.data } : direct;
+        const raw = direct.data ? { id: direct.id, ...direct.data } : direct;
+        return deserializeFromRushDB(raw);
       }
     } catch (e) {
       // Fall through to query by where: { id }
@@ -214,7 +254,8 @@ export async function findRecordById(label, id) {
   if (records.length === 0) return null;
 
   const r = records[0];
-  return r.data ? { id: r.id, ...r.data } : r;
+  const raw = r.data ? { id: r.id, ...r.data } : r;
+  return deserializeFromRushDB(raw);
 }
 
 /**
@@ -224,26 +265,15 @@ export async function createRecord(label, data) {
   const client = await getRushDBClient();
   if (!client) throw new Error("RushDB not configured");
 
-  // If data contains nested objects/arrays of objects, use importJson
-  const hasNestedObjects = Object.values(data).some(
-    (v) => typeof v === "object" && v !== null && (Array.isArray(v) ? v.some((item) => typeof item === "object" && item !== null) : true)
-  );
-
-  let res;
-  if (hasNestedObjects) {
-    res = await client.records.importJson({
-      label,
-      data,
-    });
-  } else {
-    res = await client.records.create({
-      label,
-      data,
-    });
-  }
+  const prepared = serializeForRushDB(data);
+  const res = await client.records.create({
+    label,
+    data: prepared,
+  });
 
   cachedCatalog = null;
-  return res.data ? { id: res.id, ...res.data } : res;
+  const raw = res.data ? { id: res.id, ...res.data } : res;
+  return deserializeFromRushDB(raw);
 }
 
 /**
@@ -270,13 +300,15 @@ export async function updateRecord(label, id, updates) {
 
   if (!internalId) return null;
 
+  const prepared = serializeForRushDB(updates);
   const res = await client.records.update({
     target: internalId,
     label,
-    data: updates,
+    data: prepared,
   });
   cachedCatalog = null;
-  return res.data ? { id: res.id, ...res.data } : res;
+  const raw = res.data ? { id: res.id, ...res.data } : res;
+  return deserializeFromRushDB(raw);
 }
 
 /**

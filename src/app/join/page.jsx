@@ -1,4 +1,3 @@
-import { isRouteLive } from "@/config/site-mode";
 import UnderDevelopment from "@/components/UnderDevelopment";
 
 export const metadata = {

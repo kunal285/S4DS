@@ -1,45 +1,85 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Image from "next/image";
 import {
   Settings,
   Save,
-  ExternalLink,
-  CheckCircle2,
-  AlertCircle,
   Sparkles,
-  Link2,
-  Eye,
-  Check,
+  Globe,
+  Home,
+  Info,
+  Phone,
+  Bell,
+  ToggleLeft,
+  ToggleRight,
+  ExternalLink,
+  Shield,
+  Layers,
 } from "lucide-react";
 import Toast from "@/components/Toast";
 
-// WhatsApp Icon SVG component
-function WhatsAppIcon({ className = "w-5 h-5" }) {
-  return (
-    <svg
-      className={className}
-      viewBox="0 0 24 24"
-      fill="currentColor"
-      xmlns="http://www.w3.org/2000/svg"
-    >
-      <path d="M17.472 14.382c-.301-.15-1.78-.878-2.056-.978-.276-.1-.476-.15-.676.15-.2.301-.776.978-.952 1.179-.175.2-.351.225-.652.075-.301-.15-1.27-.468-2.42-1.493-.895-.798-1.5-1.784-1.675-2.085-.176-.301-.019-.464.132-.614.136-.135.301-.351.451-.527.151-.175.201-.3.301-.501.1-.2.05-.376-.025-.526-.075-.15-.676-1.63-.927-2.232-.244-.587-.492-.507-.676-.516l-.576-.01c-.2 0-.526.075-.802.376s-1.053 1.028-1.053 2.508c0 1.48 1.078 2.909 1.229 3.109.15.2 2.122 3.24 5.141 4.544.718.31 1.279.496 1.716.634.721.23 1.378.197 1.897.12.578-.087 1.78-.727 2.03-1.429.251-.702.251-1.303.176-1.429-.076-.125-.276-.2-.577-.35z" />
-      <path
-        fillRule="evenodd"
-        clipRule="evenodd"
-        d="M12 2C6.477 2 2 6.477 2 12c0 1.89.525 3.66 1.438 5.168L2.05 21.95a.5.5 0 0 0 .61.61l4.83-1.385A9.957 9.957 0 0 0 12 22c5.523 0 10-4.477 10-10S17.523 2 12 2zm0 18.2a8.17 8.17 0 0 1-4.223-1.168.5.5 0 0 0-.411-.047l-3.376.968.974-3.356a.5.5 0 0 0-.05-.418A8.17 8.17 0 0 1 3.8 12c0-4.529 3.671-8.2 8.2-8.2 4.529 0 8.2 3.671 8.2 8.2 0 4.529-3.671 8.2-8.2 8.2z"
-      />
-    </svg>
-  );
-}
-
 export default function AdminSettingsPage() {
+  const [activeTab, setActiveTab] = useState("general");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState(null);
 
-  const [technexWhatsappUrl, setTechnexWhatsappUrl] = useState("");
-  const [technexWhatsappEnabled, setTechnexWhatsappEnabled] = useState(true);
+  const [settings, setSettings] = useState({
+    websiteName: "",
+    websiteTagline: "",
+    websiteDescription: "",
+    logoUrl: "",
+    contactEmail: "",
+    contactPhone: "",
+    contactAddress: "",
+    contactCoordinates: "",
+    footerText: "",
+    copyrightText: "",
+    socialLinks: {
+      linkedin: "",
+      github: "",
+      instagram: "",
+      twitter: "",
+      discord: "",
+      website: "",
+    },
+    homepage: {
+      heroHeadline: "",
+      heroTagline: "",
+      heroDescription: "",
+      heroBadgeText: "",
+      roadmapHeading: "",
+      roadmapSubheading: "",
+    },
+    about: {
+      headline: "",
+      story: "",
+      mission: "",
+      vision: "",
+      facultyCoordinator: "",
+      facultyDepartment: "",
+      facultyCollege: "",
+      facultyBio: "",
+    },
+    announcement: {
+      enabled: true,
+      text: "",
+      link: "",
+    },
+    launchMode: true,
+    pageAvailability: {
+      home: true,
+      technex: true,
+      contact: true,
+      about: false,
+      events: false,
+      team: false,
+      gallery: false,
+      projects: false,
+      membership: false,
+    },
+  });
 
   useEffect(() => {
     fetchSettings();
@@ -51,11 +91,65 @@ export default function AdminSettingsPage() {
       const res = await fetch("/api/settings");
       const json = await res.json();
       if (json.success && json.data) {
-        setTechnexWhatsappUrl(json.data.technexWhatsappUrl || "");
-        setTechnexWhatsappEnabled(json.data.technexWhatsappEnabled !== false);
+        const d = json.data;
+        setSettings({
+          websiteName: d.websiteName || "",
+          websiteTagline: d.websiteTagline || "",
+          websiteDescription: d.websiteDescription || "",
+          logoUrl: d.logoUrl || "",
+          contactEmail: d.contactEmail || "",
+          contactPhone: d.contactPhone || "",
+          contactAddress: d.contactAddress || "",
+          contactCoordinates: d.contactCoordinates || "",
+          footerText: d.footerText || "",
+          copyrightText: d.copyrightText || "",
+          socialLinks: {
+            linkedin: d.socialLinks?.linkedin || "",
+            github: d.socialLinks?.github || "",
+            instagram: d.socialLinks?.instagram || "",
+            twitter: d.socialLinks?.twitter || "",
+            discord: d.socialLinks?.discord || "",
+            website: d.socialLinks?.website || "",
+          },
+          homepage: {
+            heroHeadline: d.homepage?.heroHeadline || "",
+            heroTagline: d.homepage?.heroTagline || "",
+            heroDescription: d.homepage?.heroDescription || "",
+            heroBadgeText: d.homepage?.heroBadgeText || "",
+            roadmapHeading: d.homepage?.roadmapHeading || "",
+            roadmapSubheading: d.homepage?.roadmapSubheading || "",
+          },
+          about: {
+            headline: d.about?.headline || "",
+            story: d.about?.story || "",
+            mission: d.about?.mission || "",
+            vision: d.about?.vision || "",
+            facultyCoordinator: d.about?.facultyCoordinator || "",
+            facultyDepartment: d.about?.facultyDepartment || "",
+            facultyCollege: d.about?.facultyCollege || "",
+            facultyBio: d.about?.facultyBio || "",
+          },
+          announcement: {
+            enabled: d.announcement?.enabled !== false,
+            text: d.announcement?.text || "",
+            link: d.announcement?.link || "",
+          },
+          launchMode: d.launchMode !== false,
+          pageAvailability: {
+            home: d.pageAvailability?.home !== false,
+            technex: d.pageAvailability?.technex !== false,
+            contact: d.pageAvailability?.contact !== false,
+            about: Boolean(d.pageAvailability?.about),
+            events: Boolean(d.pageAvailability?.events),
+            team: Boolean(d.pageAvailability?.team),
+            gallery: Boolean(d.pageAvailability?.gallery),
+            projects: Boolean(d.pageAvailability?.projects),
+            membership: Boolean(d.pageAvailability?.membership),
+          },
+        });
       }
     } catch {
-      setToast({ type: "error", message: "Failed to load website settings" });
+      setToast({ type: "error", message: "Failed to load website settings from RushDB" });
     } finally {
       setLoading(false);
     }
@@ -75,10 +169,7 @@ export default function AdminSettingsPage() {
       const res = await fetch("/api/settings", {
         method: "PATCH",
         headers,
-        body: JSON.stringify({
-          technexWhatsappUrl: technexWhatsappUrl.trim(),
-          technexWhatsappEnabled: Boolean(technexWhatsappEnabled),
-        }),
+        body: JSON.stringify(settings),
       });
 
       const json = await res.json();
@@ -94,144 +185,536 @@ export default function AdminSettingsPage() {
     }
   };
 
+  const updateNested = (category, field, value) => {
+    setSettings((prev) => ({
+      ...prev,
+      [category]: {
+        ...prev[category],
+        [field]: value,
+      },
+    }));
+  };
+
+  const updatePageAvail = (page, value) => {
+    setSettings((prev) => ({
+      ...prev,
+      pageAvailability: {
+        ...prev.pageAvailability,
+        [page]: value,
+      },
+    }));
+  };
+
+  if (loading) {
+    return (
+      <div className="py-20 flex flex-col items-center justify-center space-y-4">
+        <div className="w-10 h-10 border-4 border-brand-orange border-t-transparent rounded-full animate-spin" />
+        <p className="text-xs text-brand-muted">Loading website settings from database...</p>
+      </div>
+    );
+  }
+
+  const tabs = [
+    { id: "general", label: "General & Branding", icon: Globe },
+    { id: "homepage", label: "Homepage CMS", icon: Home },
+    { id: "about", label: "About Chapter", icon: Info },
+    { id: "contact", label: "Contact & Social", icon: Phone },
+    { id: "announcement", label: "Announcements", icon: Bell },
+    { id: "availability", label: "Launch & Pages", icon: Layers },
+  ];
+
   return (
     <div className="space-y-8">
       {toast && <Toast toast={toast} onClose={() => setToast(null)} />}
 
       {/* Header */}
-      <div>
-        <div className="flex items-center gap-2 text-xs font-bold text-brand-orange uppercase tracking-wider mb-1">
-          <Settings className="w-4 h-4" /> Global Website Controls
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-brand-border">
+        <div>
+          <h1 className="text-2xl font-black text-brand-white flex items-center gap-2.5">
+            <Settings className="w-6 h-6 text-brand-orange" /> Centralized Website Settings
+          </h1>
+          <p className="text-xs text-brand-muted mt-1">
+            Configure all public website text, metadata, contact info, launch mode, and page availability stored in RushDB.
+          </p>
         </div>
-        <h1 className="text-3xl font-black text-brand-white">Website & Event Settings</h1>
-        <p className="text-xs text-brand-secondary mt-1">
-          Configure external communication channels, TECHNEX participant links, and chapter settings.
-        </p>
+
+        <button
+          onClick={handleSave}
+          disabled={saving}
+          className="px-6 py-2.5 rounded-xl brand-btn text-xs font-bold flex items-center gap-2 self-start shadow-lg disabled:opacity-50"
+        >
+          <Save className="w-4 h-4" /> {saving ? "Saving to RushDB..." : "Save Settings"}
+        </button>
       </div>
 
-      {loading ? (
-        <div className="p-12 text-center text-xs text-brand-muted rounded-2xl bg-background-card border border-brand-border">
-          Loading settings from RushDB...
-        </div>
-      ) : (
-        <form onSubmit={handleSave} className="space-y-8">
-          {/* ── TECHNEX 2K26 WhatsApp Configuration Card ── */}
+      {/* Navigation Tabs */}
+      <div className="flex flex-wrap gap-2 pb-2 border-b border-brand-border">
+        {tabs.map((tab) => {
+          const Icon = tab.icon;
+          const active = activeTab === tab.id;
+          return (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`px-4 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2 transition-all ${
+                active
+                  ? "bg-brand-orange/20 text-brand-yellow border border-brand-orange/40 shadow-sm"
+                  : "bg-background-card hover:bg-background-elevated text-brand-muted hover:text-white border border-brand-border"
+              }`}
+            >
+              <Icon className="w-3.5 h-3.5" />
+              <span>{tab.label}</span>
+            </button>
+          );
+        })}
+      </div>
+
+      <form onSubmit={handleSave} className="space-y-6">
+        {/* ── TAB 1: General & Branding ── */}
+        {activeTab === "general" && (
           <div className="p-6 sm:p-8 rounded-3xl bg-background-card border border-brand-border space-y-6 shadow-xl">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-brand-border">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-[#25D366]/15 border border-[#25D366]/30 flex items-center justify-center text-[#25D366]">
-                  <WhatsAppIcon className="w-5 h-5 fill-current" />
-                </div>
-                <div>
-                  <h3 className="text-lg font-bold text-brand-white">
-                    TECHNEX 2K26 – WhatsApp Group Integration
-                  </h3>
-                  <p className="text-xs text-brand-muted">
-                    Participants will see this link on the registration success page immediately after submitting.
-                  </p>
-                </div>
+            <h2 className="text-lg font-black text-brand-white border-b border-brand-border pb-3">
+              Chapter Identity &amp; Branding
+            </h2>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-brand-secondary">Website Title *</label>
+                <input
+                  type="text"
+                  required
+                  value={settings.websiteName}
+                  onChange={(e) => setSettings({ ...settings, websiteName: e.target.value })}
+                  placeholder="S4DS MITAOE"
+                  className="w-full px-4 py-2.5 rounded-xl bg-background-elevated border border-brand-border text-xs text-white focus:outline-none focus:border-brand-orange"
+                />
               </div>
 
-              {/* Status Indicator */}
-              <div>
-                <span
-                  className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold ${
-                    technexWhatsappEnabled && technexWhatsappUrl
-                      ? "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30"
-                      : "bg-amber-500/15 text-amber-300 border border-amber-500/30"
-                  }`}
-                >
-                  <span
-                    className={`w-2 h-2 rounded-full ${
-                      technexWhatsappEnabled && technexWhatsappUrl ? "bg-emerald-400" : "bg-amber-400"
-                    }`}
-                  />
-                  {technexWhatsappEnabled && technexWhatsappUrl ? "Active & Visible" : "Disabled / Inactive"}
-                </span>
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-brand-secondary">Chapter Tagline *</label>
+                <input
+                  type="text"
+                  required
+                  value={settings.websiteTagline}
+                  onChange={(e) => setSettings({ ...settings, websiteTagline: e.target.value })}
+                  placeholder="Think. Analyze. Innovate."
+                  className="w-full px-4 py-2.5 rounded-xl bg-background-elevated border border-brand-border text-xs text-white focus:outline-none focus:border-brand-orange"
+                />
+              </div>
+
+              <div className="space-y-1.5 sm:col-span-2">
+                <label className="text-xs font-semibold text-brand-secondary">Chapter Description *</label>
+                <textarea
+                  rows={3}
+                  required
+                  value={settings.websiteDescription}
+                  onChange={(e) => setSettings({ ...settings, websiteDescription: e.target.value })}
+                  className="w-full px-4 py-2.5 rounded-xl bg-background-elevated border border-brand-border text-xs text-white focus:outline-none focus:border-brand-orange resize-none"
+                />
+              </div>
+
+              <div className="space-y-1.5 sm:col-span-2">
+                <label className="text-xs font-semibold text-brand-secondary">Logo URL (or Supabase Storage URL) *</label>
+                <input
+                  type="text"
+                  required
+                  value={settings.logoUrl}
+                  onChange={(e) => setSettings({ ...settings, logoUrl: e.target.value })}
+                  placeholder="/images/logo.png"
+                  className="w-full px-4 py-2.5 rounded-xl bg-background-elevated border border-brand-border text-xs text-white focus:outline-none focus:border-brand-orange font-mono"
+                />
+              </div>
+
+              <div className="space-y-1.5 sm:col-span-2">
+                <label className="text-xs font-semibold text-brand-secondary">Footer Description Text</label>
+                <textarea
+                  rows={2}
+                  value={settings.footerText}
+                  onChange={(e) => setSettings({ ...settings, footerText: e.target.value })}
+                  className="w-full px-4 py-2.5 rounded-xl bg-background-elevated border border-brand-border text-xs text-white focus:outline-none focus:border-brand-orange resize-none"
+                />
+              </div>
+
+              <div className="space-y-1.5 sm:col-span-2">
+                <label className="text-xs font-semibold text-brand-secondary">Copyright Notice</label>
+                <input
+                  type="text"
+                  value={settings.copyrightText}
+                  onChange={(e) => setSettings({ ...settings, copyrightText: e.target.value })}
+                  placeholder="© {year} S4DS MITAOE Student Chapter. All rights reserved."
+                  className="w-full px-4 py-2.5 rounded-xl bg-background-elevated border border-brand-border text-xs text-white focus:outline-none focus:border-brand-orange"
+                />
               </div>
             </div>
+          </div>
+        )}
 
-            {/* URL Input */}
-            <div className="space-y-2">
-              <label className="text-xs font-bold text-brand-secondary flex items-center gap-2">
-                <Link2 className="w-4 h-4 text-brand-orange" />
-                Official WhatsApp Group Invitation URL
-              </label>
-              <div className="relative">
+        {/* ── TAB 2: Homepage CMS ── */}
+        {activeTab === "homepage" && (
+          <div className="p-6 sm:p-8 rounded-3xl bg-background-card border border-brand-border space-y-6 shadow-xl">
+            <h2 className="text-lg font-black text-brand-white border-b border-brand-border pb-3">
+              Homepage Hero &amp; Roadmap Content
+            </h2>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-1.5 sm:col-span-2">
+                <label className="text-xs font-semibold text-brand-secondary">Hero Badge Text</label>
+                <input
+                  type="text"
+                  value={settings.homepage.heroBadgeText}
+                  onChange={(e) => updateNested("homepage", "heroBadgeText", e.target.value)}
+                  placeholder="Website Under Development • Launching Soon"
+                  className="w-full px-4 py-2.5 rounded-xl bg-background-elevated border border-brand-border text-xs text-white focus:outline-none focus:border-brand-orange"
+                />
+              </div>
+
+              <div className="space-y-1.5 sm:col-span-2">
+                <label className="text-xs font-semibold text-brand-secondary">Hero Main Headline *</label>
+                <input
+                  type="text"
+                  required
+                  value={settings.homepage.heroHeadline}
+                  onChange={(e) => updateNested("homepage", "heroHeadline", e.target.value)}
+                  placeholder="Something Extraordinary Is Brewing."
+                  className="w-full px-4 py-2.5 rounded-xl bg-background-elevated border border-brand-border text-xs text-white focus:outline-none focus:border-brand-orange"
+                />
+              </div>
+
+              <div className="space-y-1.5 sm:col-span-2">
+                <label className="text-xs font-semibold text-brand-secondary">Hero Tagline</label>
+                <input
+                  type="text"
+                  value={settings.homepage.heroTagline}
+                  onChange={(e) => updateNested("homepage", "heroTagline", e.target.value)}
+                  placeholder="Think. Analyze. Innovate."
+                  className="w-full px-4 py-2.5 rounded-xl bg-background-elevated border border-brand-border text-xs text-white focus:outline-none focus:border-brand-orange"
+                />
+              </div>
+
+              <div className="space-y-1.5 sm:col-span-2">
+                <label className="text-xs font-semibold text-brand-secondary">Hero Description Text *</label>
+                <textarea
+                  rows={4}
+                  required
+                  value={settings.homepage.heroDescription}
+                  onChange={(e) => updateNested("homepage", "heroDescription", e.target.value)}
+                  className="w-full px-4 py-2.5 rounded-xl bg-background-elevated border border-brand-border text-xs text-white focus:outline-none focus:border-brand-orange resize-none"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-brand-secondary">Roadmap Heading</label>
+                <input
+                  type="text"
+                  value={settings.homepage.roadmapHeading}
+                  onChange={(e) => updateNested("homepage", "roadmapHeading", e.target.value)}
+                  placeholder="What We're Building For You"
+                  className="w-full px-4 py-2.5 rounded-xl bg-background-elevated border border-brand-border text-xs text-white focus:outline-none focus:border-brand-orange"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-brand-secondary">Roadmap Subheading</label>
+                <input
+                  type="text"
+                  value={settings.homepage.roadmapSubheading}
+                  onChange={(e) => updateNested("homepage", "roadmapSubheading", e.target.value)}
+                  placeholder="Here is a sneak peek at what is arriving..."
+                  className="w-full px-4 py-2.5 rounded-xl bg-background-elevated border border-brand-border text-xs text-white focus:outline-none focus:border-brand-orange"
+                />
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ── TAB 3: About Chapter ── */}
+        {activeTab === "about" && (
+          <div className="p-6 sm:p-8 rounded-3xl bg-background-card border border-brand-border space-y-6 shadow-xl">
+            <h2 className="text-lg font-black text-brand-white border-b border-brand-border pb-3">
+              About Chapter Mission, Vision &amp; Faculty Leadership
+            </h2>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-1.5 sm:col-span-2">
+                <label className="text-xs font-semibold text-brand-secondary">About Headline</label>
+                <input
+                  type="text"
+                  value={settings.about.headline}
+                  onChange={(e) => updateNested("about", "headline", e.target.value)}
+                  placeholder="Pioneering Data Science & Artificial Intelligence Excellence"
+                  className="w-full px-4 py-2.5 rounded-xl bg-background-elevated border border-brand-border text-xs text-white focus:outline-none focus:border-brand-orange"
+                />
+              </div>
+
+              <div className="space-y-1.5 sm:col-span-2">
+                <label className="text-xs font-semibold text-brand-secondary">Chapter Story / Background</label>
+                <textarea
+                  rows={4}
+                  value={settings.about.story}
+                  onChange={(e) => updateNested("about", "story", e.target.value)}
+                  className="w-full px-4 py-2.5 rounded-xl bg-background-elevated border border-brand-border text-xs text-white focus:outline-none focus:border-brand-orange resize-none"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-brand-secondary">Mission Statement</label>
+                <textarea
+                  rows={3}
+                  value={settings.about.mission}
+                  onChange={(e) => updateNested("about", "mission", e.target.value)}
+                  className="w-full px-4 py-2.5 rounded-xl bg-background-elevated border border-brand-border text-xs text-white focus:outline-none focus:border-brand-orange resize-none"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-brand-secondary">Vision Statement</label>
+                <textarea
+                  rows={3}
+                  value={settings.about.vision}
+                  onChange={(e) => updateNested("about", "vision", e.target.value)}
+                  className="w-full px-4 py-2.5 rounded-xl bg-background-elevated border border-brand-border text-xs text-white focus:outline-none focus:border-brand-orange resize-none"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-brand-secondary">Faculty Coordinator Name</label>
+                <input
+                  type="text"
+                  value={settings.about.facultyCoordinator}
+                  onChange={(e) => updateNested("about", "facultyCoordinator", e.target.value)}
+                  placeholder="Prof. Aparna Kulkarni"
+                  className="w-full px-4 py-2.5 rounded-xl bg-background-elevated border border-brand-border text-xs text-white focus:outline-none focus:border-brand-orange"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-brand-secondary">Department</label>
+                <input
+                  type="text"
+                  value={settings.about.facultyDepartment}
+                  onChange={(e) => updateNested("about", "facultyDepartment", e.target.value)}
+                  placeholder="Department of Computer Engineering (Data Science)"
+                  className="w-full px-4 py-2.5 rounded-xl bg-background-elevated border border-brand-border text-xs text-white focus:outline-none focus:border-brand-orange"
+                />
+              </div>
+
+              <div className="space-y-1.5 sm:col-span-2">
+                <label className="text-xs font-semibold text-brand-secondary">Faculty Coordinator Bio</label>
+                <textarea
+                  rows={2}
+                  value={settings.about.facultyBio}
+                  onChange={(e) => updateNested("about", "facultyBio", e.target.value)}
+                  className="w-full px-4 py-2.5 rounded-xl bg-background-elevated border border-brand-border text-xs text-white focus:outline-none focus:border-brand-orange resize-none"
+                />
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ── TAB 4: Contact & Social ── */}
+        {activeTab === "contact" && (
+          <div className="p-6 sm:p-8 rounded-3xl bg-background-card border border-brand-border space-y-6 shadow-xl">
+            <h2 className="text-lg font-black text-brand-white border-b border-brand-border pb-3">
+              Official Coordinates &amp; Social Channels
+            </h2>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-brand-secondary">Chapter Email Address *</label>
+                <input
+                  type="email"
+                  required
+                  value={settings.contactEmail}
+                  onChange={(e) => setSettings({ ...settings, contactEmail: e.target.value })}
+                  placeholder="s4ds.datascience@mitaoe.ac.in"
+                  className="w-full px-4 py-2.5 rounded-xl bg-background-elevated border border-brand-border text-xs text-white focus:outline-none focus:border-brand-orange"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-brand-secondary">Phone Number</label>
+                <input
+                  type="text"
+                  value={settings.contactPhone}
+                  onChange={(e) => setSettings({ ...settings, contactPhone: e.target.value })}
+                  placeholder="+91 98765 43210"
+                  className="w-full px-4 py-2.5 rounded-xl bg-background-elevated border border-brand-border text-xs text-white focus:outline-none focus:border-brand-orange"
+                />
+              </div>
+
+              <div className="space-y-1.5 sm:col-span-2">
+                <label className="text-xs font-semibold text-brand-secondary">Full Campus Address *</label>
+                <input
+                  type="text"
+                  required
+                  value={settings.contactAddress}
+                  onChange={(e) => setSettings({ ...settings, contactAddress: e.target.value })}
+                  placeholder="MIT Academy of Engineering, Dehu Phata, Alandi (D), Pune - 412105"
+                  className="w-full px-4 py-2.5 rounded-xl bg-background-elevated border border-brand-border text-xs text-white focus:outline-none focus:border-brand-orange"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-brand-secondary">LinkedIn Profile URL</label>
                 <input
                   type="url"
-                  placeholder="https://chat.whatsapp.com/..."
-                  value={technexWhatsappUrl}
-                  onChange={(e) => setTechnexWhatsappUrl(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl bg-background-elevated border border-brand-border text-brand-white placeholder-brand-muted text-sm focus:outline-none focus:border-brand-orange font-mono"
+                  value={settings.socialLinks.linkedin}
+                  onChange={(e) => updateNested("socialLinks", "linkedin", e.target.value)}
+                  placeholder="https://linkedin.com/..."
+                  className="w-full px-4 py-2.5 rounded-xl bg-background-elevated border border-brand-border text-xs text-white focus:outline-none focus:border-brand-orange"
                 />
               </div>
-              <p className="text-[11px] text-brand-muted">
-                Paste the invite link directly from WhatsApp Group Settings → &quot;Invite via link&quot;.
-              </p>
-            </div>
 
-            {/* Toggle Enable/Disable */}
-            <div className="p-4 rounded-2xl bg-background-elevated border border-brand-border flex items-center justify-between gap-4">
-              <div>
-                <span className="text-xs font-bold text-brand-white block">
-                  Enable WhatsApp Invitation on Success Page
-                </span>
-                <span className="text-[11px] text-brand-muted block mt-0.5">
-                  When enabled, registered teams will see the &quot;JOIN OFFICIAL WHATSAPP GROUP&quot; button on /registration/success.
-                </span>
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-brand-secondary">GitHub Organization URL</label>
+                <input
+                  type="url"
+                  value={settings.socialLinks.github}
+                  onChange={(e) => updateNested("socialLinks", "github", e.target.value)}
+                  placeholder="https://github.com/..."
+                  className="w-full px-4 py-2.5 rounded-xl bg-background-elevated border border-brand-border text-xs text-white focus:outline-none focus:border-brand-orange"
+                />
               </div>
 
-              <label className="relative inline-flex items-center cursor-pointer select-none">
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-brand-secondary">Instagram URL</label>
+                <input
+                  type="url"
+                  value={settings.socialLinks.instagram}
+                  onChange={(e) => updateNested("socialLinks", "instagram", e.target.value)}
+                  placeholder="https://instagram.com/..."
+                  className="w-full px-4 py-2.5 rounded-xl bg-background-elevated border border-brand-border text-xs text-white focus:outline-none focus:border-brand-orange"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-brand-secondary">Official College Website URL</label>
+                <input
+                  type="url"
+                  value={settings.socialLinks.website}
+                  onChange={(e) => updateNested("socialLinks", "website", e.target.value)}
+                  placeholder="https://mitaoe.ac.in"
+                  className="w-full px-4 py-2.5 rounded-xl bg-background-elevated border border-brand-border text-xs text-white focus:outline-none focus:border-brand-orange"
+                />
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ── TAB 5: Announcements ── */}
+        {activeTab === "announcement" && (
+          <div className="p-6 sm:p-8 rounded-3xl bg-background-card border border-brand-border space-y-6 shadow-xl">
+            <h2 className="text-lg font-black text-brand-white border-b border-brand-border pb-3">
+              Announcement Banner
+            </h2>
+
+            <div className="space-y-4">
+              <div className="flex items-center gap-3 p-4 rounded-2xl bg-background-elevated border border-brand-border">
                 <input
                   type="checkbox"
-                  checked={technexWhatsappEnabled}
-                  onChange={(e) => setTechnexWhatsappEnabled(e.target.checked)}
-                  className="sr-only peer"
+                  id="announcementEnabled"
+                  checked={settings.announcement.enabled}
+                  onChange={(e) => updateNested("announcement", "enabled", e.target.checked)}
+                  className="w-5 h-5 rounded text-brand-orange focus:ring-0 bg-background-card border-brand-border"
                 />
-                <div className="w-11 h-6 bg-background-card peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500 border border-brand-border"></div>
-              </label>
+                <label htmlFor="announcementEnabled" className="cursor-pointer">
+                  <strong className="text-sm text-white block">Enable Announcement Banner</strong>
+                  <span className="text-xs text-brand-muted">Display announcement notification across public site</span>
+                </label>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-brand-secondary">Banner Text</label>
+                <input
+                  type="text"
+                  value={settings.announcement.text}
+                  onChange={(e) => updateNested("announcement", "text", e.target.value)}
+                  placeholder="🚀 Registrations are LIVE for TECHNEX 2K26!"
+                  className="w-full px-4 py-2.5 rounded-xl bg-background-elevated border border-brand-border text-xs text-white focus:outline-none focus:border-brand-orange"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-brand-secondary">Destination Link URL</label>
+                <input
+                  type="text"
+                  value={settings.announcement.link}
+                  onChange={(e) => updateNested("announcement", "link", e.target.value)}
+                  placeholder="/technex-2k26"
+                  className="w-full px-4 py-2.5 rounded-xl bg-background-elevated border border-brand-border text-xs text-white focus:outline-none focus:border-brand-orange"
+                />
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ── TAB 6: Launch Mode & Page Availability ── */}
+        {activeTab === "availability" && (
+          <div className="p-6 sm:p-8 rounded-3xl bg-background-card border border-brand-border space-y-6 shadow-xl">
+            <h2 className="text-lg font-black text-brand-white border-b border-brand-border pb-3">
+              Website Launch Mode &amp; Page Availability Controls
+            </h2>
+
+            <div className="p-4 rounded-2xl bg-brand-orange/10 border border-brand-orange/30 flex items-start gap-3">
+              <Shield className="w-5 h-5 text-brand-orange shrink-0 mt-0.5" />
+              <div className="text-xs leading-relaxed text-brand-secondary">
+                Control which pages are currently live vs. displaying the Under Development preview. As your committee finishes each section, simply toggle the switch to make it live instantly without code changes!
+              </div>
             </div>
 
-            {/* Preview Section */}
-            {technexWhatsappUrl && (
-              <div className="p-4 rounded-2xl bg-background-elevated/70 border border-brand-border space-y-3">
-                <span className="text-xs font-bold text-brand-secondary flex items-center gap-2">
-                  <Eye className="w-4 h-4 text-brand-yellow" /> Button Preview on Success Page:
-                </span>
-                <div className="flex flex-col sm:flex-row items-center gap-4">
-                  <a
-                    href={technexWhatsappUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="px-6 py-3 rounded-xl bg-[#25D366] hover:bg-[#20ba59] text-white font-black text-xs uppercase tracking-wider flex items-center gap-2 shadow-lg transition-transform hover:scale-105"
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {[
+                { key: "home", label: "Homepage (/)" },
+                { key: "technex", label: "TECHNEX 2K26 (/technex-2k26)" },
+                { key: "contact", label: "Contact Us (/contact)" },
+                { key: "about", label: "About Chapter (/about)" },
+                { key: "events", label: "Events & Workshops (/events)" },
+                { key: "team", label: "Our Core Team (/team)" },
+                { key: "projects", label: "Student Projects (/projects)" },
+                { key: "gallery", label: "Event Gallery (/gallery)" },
+                { key: "membership", label: "Membership Hub (/membership)" },
+              ].map((item) => {
+                const isLive = Boolean(settings.pageAvailability[item.key]);
+                return (
+                  <div
+                    key={item.key}
+                    onClick={() => updatePageAvail(item.key, !isLive)}
+                    className={`p-4 rounded-2xl border cursor-pointer transition-all flex items-center justify-between ${
+                      isLive
+                        ? "bg-emerald-500/10 border-emerald-500/40"
+                        : "bg-background-elevated border-brand-border hover:border-brand-orange/40"
+                    }`}
                   >
-                    <WhatsAppIcon className="w-4 h-4 fill-current" />
-                    JOIN OFFICIAL WHATSAPP GROUP
-                    <ExternalLink className="w-3.5 h-3.5" />
-                  </a>
+                    <div>
+                      <span className="text-xs font-bold text-white block">{item.label}</span>
+                      <span className={`text-[10px] font-black uppercase tracking-wider block mt-0.5 ${
+                        isLive ? "text-emerald-400" : "text-amber-400"
+                      }`}>
+                        {isLive ? "Live" : "Coming Soon"}
+                      </span>
+                    </div>
 
-                  <span className="text-[11px] text-brand-muted italic">
-                    Click to test link in a new tab
-                  </span>
-                </div>
-              </div>
-            )}
+                    <div className={`p-1 rounded-full ${isLive ? "text-emerald-400" : "text-zinc-600"}`}>
+                      {isLive ? <ToggleRight className="w-7 h-7" /> : <ToggleLeft className="w-7 h-7" />}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           </div>
+        )}
 
-          {/* Submit Action */}
-          <div className="flex justify-end gap-4">
-            <button
-              type="submit"
-              disabled={saving}
-              className="px-8 py-3.5 rounded-xl brand-btn text-white text-xs font-bold flex items-center gap-2 shadow-xl shadow-brand-red/25 transition-transform hover:scale-105 disabled:opacity-50"
-            >
-              <Save className="w-4 h-4" />
-              {saving ? "Saving to RushDB..." : "Save Settings"}
-            </button>
-          </div>
-        </form>
-      )}
+        {/* Bottom Save Bar */}
+        <div className="flex justify-end pt-4">
+          <button
+            type="submit"
+            disabled={saving}
+            className="w-full sm:w-auto px-8 py-3.5 rounded-xl brand-btn text-white font-black text-sm shadow-xl shadow-brand-red/30 disabled:opacity-50 flex items-center justify-center gap-2"
+          >
+            <Save className="w-4 h-4" /> {saving ? "Saving to RushDB..." : "Save Website Settings"}
+          </button>
+        </div>
+      </form>
     </div>
   );
 }

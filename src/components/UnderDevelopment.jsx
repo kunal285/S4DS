@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import {
@@ -14,6 +15,19 @@ import {
 } from "lucide-react";
 
 export default function UnderDevelopment({ section = "This Section" }) {
+  const [settings, setSettings] = useState(null);
+
+  useEffect(() => {
+    fetch("/api/settings")
+      .then((res) => res.json())
+      .then((json) => {
+        if (json.success && json.data) {
+          setSettings(json.data);
+        }
+      })
+      .catch((err) => console.warn("Notice: UnderDevelopment settings:", err));
+  }, []);
+
   return (
     <div className="min-h-[75vh] flex items-center justify-center px-4 sm:px-6 lg:px-8 py-16">
       <div className="relative max-w-2xl w-full p-8 sm:p-12 rounded-3xl bg-background-card border border-brand-orange/30 shadow-2xl text-center space-y-8 overflow-hidden">
@@ -27,8 +41,8 @@ export default function UnderDevelopment({ section = "This Section" }) {
           <div className="relative w-20 h-20 rounded-2xl bg-gradient-to-tr from-brand-red via-brand-orange to-brand-yellow p-1 shadow-2xl shadow-brand-red/30">
             <div className="w-full h-full bg-[#17110D] rounded-2xl flex items-center justify-center p-2">
               <Image
-                src="/images/logo.png"
-                alt="S4DS MITAOE Logo"
+                src={settings?.logoUrl || "/images/logo.png"}
+                alt={`${settings?.websiteName || "S4DS MITAOE"} Logo`}
                 width={56}
                 height={56}
                 className="object-contain"
@@ -66,7 +80,7 @@ export default function UnderDevelopment({ section = "This Section" }) {
           </div>
 
           <p className="text-xs text-brand-secondary leading-relaxed">
-            While our full website is being crafted, registrations for <strong className="text-brand-white">TECHNEX 2K26 – The Project Innovation Expo</strong> are actively live. Present your prototype at MITAOE Pune and connect with venture mentors!
+            While our full website is being crafted, registrations for <strong className="text-brand-white">{settings?.technex?.title || "TECHNEX 2K26 – The Project Innovation Expo"}</strong> are actively live. Present your prototype at MITAOE Pune and connect with venture mentors!
           </p>
 
           <div className="pt-1">
@@ -74,7 +88,7 @@ export default function UnderDevelopment({ section = "This Section" }) {
               href="/technex-2k26"
               className="inline-flex items-center gap-2 text-xs font-bold text-brand-orange hover:text-brand-yellow transition-colors"
             >
-              Explore TECHNEX 2K26 & Register Team &rarr;
+              Explore {settings?.technex?.title || "TECHNEX 2K26"} &amp; Register Team &rarr;
             </Link>
           </div>
         </div>
@@ -99,14 +113,8 @@ export default function UnderDevelopment({ section = "This Section" }) {
             href="/contact"
             className="px-5 py-2.5 rounded-xl bg-background-secondary hover:bg-background-elevated text-brand-yellow hover:text-white border border-brand-border text-xs font-bold flex items-center gap-2 transition-colors shadow-sm"
           >
-            <MessageSquare className="w-3.5 h-3.5 text-brand-orange" /> Contact Us
+            <MessageSquare className="w-3.5 h-3.5" /> Contact S4DS Chapter
           </Link>
-        </div>
-
-        {/* Footer Note */}
-        <div className="pt-4 border-t border-brand-border flex items-center justify-center gap-2 text-[11px] text-brand-muted">
-          <Clock className="w-3.5 h-3.5 text-brand-orange" />
-          <span>Society for Data Science (S4DS) • MIT Academy of Engineering, Pune</span>
         </div>
       </div>
     </div>

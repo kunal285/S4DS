@@ -1,5 +1,11 @@
 import { NextResponse } from "next/server";
-import { getTechnexRegistrations, createTechnexRegistration, checkTechnexDuplicate } from "@/lib/db";
+import {
+  getTechnexRegistrations,
+  createTechnexRegistration,
+  checkTechnexDuplicate,
+  getTechnexConfig,
+  createMediaItem,
+} from "@/lib/db";
 import { validateAdminRequest } from "@/lib/auth";
 import { uploadToSupabase, getSignedUrl } from "@/lib/supabase";
 
@@ -96,21 +102,55 @@ export async function POST(request) {
       utr,
     } = data;
 
-    // 0. Membership Tier & Server-Side Fee Verification (Security Enforcement)
-    const VALID_MEMBERSHIP_TIERS = {
-      "S4DS Member": 49,
-      "Non-S4DS Member": 99,
-    };
+    // 0. Fetch Dynamic TECHNEX Configuration from RushDB
+    const technexConfig = await getTechnexConfig();
 
-    if (!membershipType || !VALID_MEMBERSHIP_TIERS.hasOwnProperty(membershipType)) {
+    // Verify registration availability
+    if (technexConfig.registrationOpen === false) {
       return NextResponse.json(
-        { error: "Invalid membership category. Please select either 'S4DS Member' or 'Non-S4DS Member'." },
+        { error: "Registrations for TECHNEX 2K26 are currently closed." },
+        { status: 400 }
+      );
+    }
+    if (technexConfig.registrationDeadline) {
+      const deadlineDate = new Date(technexConfig.registrationDeadline);
+      if (!isNaN(deadlineDate) && Date.now() > deadlineDate.getTime()) {
+        return NextResponse.json(
+          { error: "Registration deadline for TECHNEX 2K26 has passed." },
+          { status: 400 }
+        );
+      }
+    }
+
+    // Verify membership tier & calculate dynamic fee server-side
+    const configuredTiers = technexConfig.membershipTiers || [];
+    const matchedTier = configuredTiers.find(
+      (t) =>
+        t.name.toLowerCase() === (membershipType || "").toLowerCase() ||
+        t.id === membershipType
+    );
+
+    if (!matchedTier) {
+      const tierNames = configuredTiers.map((t) => `'${t.name}'`).join(" or ");
+      return NextResponse.json(
+        { error: `Invalid membership category. Please select either ${tierNames}.` },
         { status: 400 }
       );
     }
 
-    // Never trust client-side fee. Enforce verified server-calculated fee.
-    const verifiedRegistrationFee = VALID_MEMBERSHIP_TIERS[membershipType];
+    // Never trust client-side fee. Enforce verified server-calculated fee from RushDB.
+    const verifiedRegistrationFee = Number(matchedTier.fee);
+
+    // Validate team size limits against RushDB configuration
+    const minSize = technexConfig.minTeamSize || 1;
+    const maxSize = technexConfig.maxTeamSize || 4;
+    const totalTeamCount = 1 + (Array.isArray(teamMembers) ? teamMembers.length : 0);
+    if (totalTeamCount < minSize || totalTeamCount > maxSize) {
+      return NextResponse.json(
+        { error: `Team size must be between ${minSize} and ${maxSize} members (including team leader).` },
+        { status: 400 }
+      );
+    }
 
     // Form validations
     if (!teamName || teamName.trim().length < 2) {
@@ -168,6 +208,26 @@ export async function POST(request) {
       });
       paymentScreenshotUrl = uploadResult.fileUrl;
       paymentScreenshotPath = uploadResult.storagePath;
+
+      // Link screenshot reference as MEDIA_ITEM in RushDB
+      try {
+        const mediaRecord = await createMediaItem({
+          title: `Payment Proof - ${teamName.trim()}`,
+          category: "payment-screenshot",
+          fileName: screenshotFile.name || "payment-proof.png",
+          storagePath: uploadResult.storagePath,
+          fileUrl: uploadResult.fileUrl,
+          fileSize: uploadResult.fileSize || 0,
+          mimeType: screenshotFile.type || "image/png",
+          isPrivate: true,
+          isActive: true,
+        });
+        if (mediaRecord?.id) {
+          data.paymentScreenshotMediaId = mediaRecord.id;
+        }
+      } catch (e) {
+        console.warn("Notice: payment screenshot media reference record:", e.message);
+      }
     }
 
     if (!paymentScreenshotUrl && !paymentScreenshotPath) {
@@ -201,6 +261,7 @@ export async function POST(request) {
       utr: trimmedUtr,
       paymentScreenshotUrl,
       paymentScreenshotPath,
+      paymentScreenshotMediaId: data.paymentScreenshotMediaId || null,
       registrationStatus: "Successfully Registered",
       status: "Approved",
     });
