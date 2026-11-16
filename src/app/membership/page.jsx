@@ -23,12 +23,14 @@ import {
 export default function MembershipPage() {
   const [isLive, setIsLive] = useState(false);
   const [checkingMode, setCheckingMode] = useState(true);
+  const [settings, setSettings] = useState(null);
 
   useEffect(() => {
     fetch("/api/settings")
       .then((r) => r.json())
       .then((json) => {
         if (json.success && json.data) {
+          setSettings(json.data);
           setIsLive(Boolean(json.data.pageAvailability?.membership));
         }
       })
@@ -49,7 +51,8 @@ export default function MembershipPage() {
     return <UnderDevelopment section="Membership Portal" />;
   }
 
-  const benefits = [
+  const memConfig = settings?.membership || {};
+  const benefits = memConfig.benefits || [
     "Official S4DS National Student Member Certificate & Membership Kit",
     "Priority access & discounted entry to TECHNEX 2K26 Project Expo",
     "Closed-door masterclasses in Generative AI, LLMs, Computer Vision & MLOps",
@@ -57,11 +60,18 @@ export default function MembershipPage() {
     "Exclusive placement prep bootcamps, resume reviews & industry referrals",
   ];
 
-  const eligibility = [
+  const eligibility = memConfig.eligibility || [
     "Open to all enrolled students of MIT Academy of Engineering (MITAOE), Alandi.",
     "Students across all engineering departments (Data Science, AI, Computer, IT, ENTC, Mechanical, Chemical, Civil).",
     "First Year, Second Year, Third Year, and Final Year B.Tech students are eligible.",
     "Passionate about Data Science, Machine Learning, Web Innovation, and Technical Leadership.",
+  ];
+
+  const timeline = memConfig.timeline || [
+    { label: "Registration Portal Launch", date: memConfig.intakeSchedule || "February 2027" },
+    { label: "Chapter Orientation & Induction", date: "MITAOE Auditorium" },
+    { label: "Member Kit & Certificate Allocation", date: "Post-Induction" },
+    { label: "Active Chapter Term", date: "Academic Year 2026-2027" },
   ];
 
   const domains = [
@@ -71,18 +81,22 @@ export default function MembershipPage() {
     { title: "Emerging Tech & Robotics", desc: "IoT, Edge AI devices, and autonomous platforms" },
   ];
 
+  const intakeSchedule = memConfig.intakeSchedule || "Intake Starts February 2027";
+  const intakeTitle = memConfig.intakeTitle || `Join Society for Data Science, ${settings?.websiteName ? settings.websiteName.split(" ").slice(1).join(" ") : "MITAOE"}`;
+  const intakeDesc = memConfig.intakeDescription || `Official enrollment for the S4DS student chapter cohort is scheduled for ${intakeSchedule}. Explore membership privileges, eligibility guidelines, and upcoming term roadmap below.`;
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 space-y-16">
       {/* ── Header ── */}
       <div className="text-center max-w-3xl mx-auto space-y-4">
         <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-brand-orange/15 border border-brand-orange/30 text-xs font-bold text-brand-orange uppercase tracking-wider">
-          <Calendar className="w-4 h-4 text-brand-yellow" /> Intake Starts February 2027
+          <Calendar className="w-4 h-4 text-brand-yellow" /> {intakeSchedule}
         </div>
         <h1 className="text-4xl sm:text-5xl font-black text-brand-white tracking-tight">
-          Join <span className="brand-text-gradient">Society for Data Science</span>, MITAOE
+          {intakeTitle}
         </h1>
         <p className="text-base sm:text-lg text-brand-secondary leading-relaxed">
-          Official enrollment for the S4DS MITAOE Student Chapter cohort will officially launch in <strong className="text-brand-yellow font-bold">February 2027</strong>. Explore membership privileges, eligibility guidelines, and upcoming term roadmap below.
+          {intakeDesc}
         </p>
       </div>
 
@@ -110,7 +124,7 @@ export default function MembershipPage() {
                 <Users className="w-4 h-4 text-brand-orange" /> Chapter Community &amp; Culture
               </h4>
               <p className="text-xs text-brand-secondary leading-relaxed">
-                Joining S4DS MITAOE connects you directly with student mentors, faculty researchers, and industry alumni. Members gain hands-on collaboration opportunities across high-impact data initiatives, hackathons, and research projects.
+                Joining S4DS connects you directly with student mentors, faculty researchers, and industry alumni. Members gain hands-on collaboration opportunities across high-impact data initiatives, hackathons, and research projects.
               </p>
             </div>
           </div>
@@ -143,16 +157,16 @@ export default function MembershipPage() {
                   <Clock className="w-3.5 h-3.5 text-brand-orange" /> Admissions Notice
                 </span>
                 <h3 className="text-2xl font-black text-brand-white">
-                  Registrations Open in February 2027
+                  {memConfig.intakeSchedule || "Registrations Scheduled"}
                 </h3>
               </div>
               <span className="px-3 py-1 rounded-xl bg-background-elevated border border-brand-border text-brand-secondary text-xs font-mono font-bold self-start sm:self-auto">
-                Status: Scheduled
+                Status: {memConfig.status || "Scheduled"}
               </span>
             </div>
 
             <p className="text-sm text-brand-secondary leading-relaxed">
-              The online registration portal for new student memberships will officially open in <strong className="text-brand-yellow">February 2027</strong>. Student applications are currently closed while chapter activities focus on our flagship national event <strong className="text-brand-white">TECHNEX 2K26</strong>.
+              {intakeDesc}
             </p>
 
             {/* Timeline Breakdown */}
@@ -161,29 +175,19 @@ export default function MembershipPage() {
                 <Calendar className="w-4 h-4 text-brand-yellow" /> Official Cohort Timeline
               </h4>
               <div className="space-y-2 text-xs">
-                <div className="flex justify-between items-center pb-2 border-b border-brand-border">
-                  <span className="text-brand-muted">Registration Portal Launch:</span>
-                  <span className="font-bold text-brand-yellow">February 2027</span>
-                </div>
-                <div className="flex justify-between items-center pb-2 border-b border-brand-border">
-                  <span className="text-brand-muted">Chapter Orientation &amp; Induction:</span>
-                  <span className="font-semibold text-brand-white">February 2027 (MITAOE Auditorium)</span>
-                </div>
-                <div className="flex justify-between items-center pb-2 border-b border-brand-border">
-                  <span className="text-brand-muted">Member Kit &amp; Certificate Allocation:</span>
-                  <span className="font-semibold text-brand-white">February 2027</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-brand-muted">Active Chapter Term:</span>
-                  <span className="font-semibold text-brand-white">Academic Year 2027</span>
-                </div>
+                {timeline.map((t, idx) => (
+                  <div key={idx} className={`flex justify-between items-center ${idx < timeline.length - 1 ? "pb-2 border-b border-brand-border" : ""}`}>
+                    <span className="text-brand-muted">{t.label}:</span>
+                    <span className="font-bold text-brand-yellow">{t.date}</span>
+                  </div>
+                ))}
               </div>
             </div>
 
             {/* Eligibility Guidelines */}
             <div className="space-y-3 pt-2">
               <h4 className="text-xs font-bold uppercase tracking-wider text-brand-white flex items-center gap-1.5">
-                <GraduationCap className="w-4 h-4 text-brand-orange" /> Who Can Join in February 2027?
+                <GraduationCap className="w-4 h-4 text-brand-orange" /> Eligibility Guidelines
               </h4>
               <ul className="space-y-2 text-xs text-brand-secondary">
                 {eligibility.map((item, i) => (

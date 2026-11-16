@@ -59,6 +59,9 @@ export default function TechnexPage() {
     leaderPhone: "",
     leaderCollege: "MIT Academy of Engineering, Pune",
     leaderPrn: "",
+    leaderDepartment: "Computer Engineering",
+    leaderYear: "Third Year",
+    leaderDivision: "A",
     teamMembers: [],
     utr: "",
   });
@@ -127,7 +130,15 @@ export default function TechnexPage() {
       ...prev,
       teamMembers: [
         ...prev.teamMembers,
-        { name: "", email: "", phone: "", prn: "" },
+        {
+          name: "",
+          email: "",
+          phone: "",
+          prn: "",
+          department: "Computer Engineering",
+          year: "Third Year",
+          division: "A",
+        },
       ],
     }));
   };
@@ -151,14 +162,14 @@ export default function TechnexPage() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    const allowed = ["image/png", "image/jpeg", "image/jpg"];
+    const allowed = ["image/png", "image/jpeg", "image/jpg", "image/webp"];
     if (!allowed.includes(file.type)) {
-      setErrorMessage("Please select a valid PNG, JPG, or JPEG image file.");
+      setErrorMessage("Please select a valid PNG, JPG, JPEG, or WebP image file.");
       return;
     }
 
-    if (file.size > 10 * 1024 * 1024) {
-      setErrorMessage("File size exceeds 10MB limit. Please upload a smaller image.");
+    if (file.size > 5 * 1024 * 1024) {
+      setErrorMessage("File size exceeds 5MB limit. Please upload a smaller image.");
       return;
     }
 
@@ -252,6 +263,9 @@ export default function TechnexPage() {
       payload.append("leaderPhone", formData.leaderPhone.trim());
       payload.append("leaderCollege", formData.leaderCollege.trim());
       payload.append("leaderPrn", formData.leaderPrn.trim());
+      payload.append("leaderDepartment", (formData.leaderDepartment || "").trim());
+      payload.append("leaderYear", (formData.leaderYear || "").trim());
+      payload.append("leaderDivision", (formData.leaderDivision || "").trim());
       payload.append("teamMembers", JSON.stringify(formData.teamMembers));
       payload.append("utr", formData.utr.trim());
       payload.append("screenshot", screenshotFile);
@@ -640,7 +654,7 @@ export default function TechnexPage() {
                   />
                 </div>
 
-                <div className="space-y-1.5 sm:col-span-2">
+                <div className="space-y-1.5">
                   <label className="text-xs font-semibold uppercase tracking-wider text-brand-secondary">
                     Leader PRN / Student Roll Number *
                   </label>
@@ -650,6 +664,55 @@ export default function TechnexPage() {
                     placeholder="e.g. 2022BTECS001"
                     value={formData.leaderPrn}
                     onChange={(e) => setFormData({ ...formData, leaderPrn: e.target.value })}
+                    className="w-full px-4 py-2.5 rounded-xl bg-background-elevated border border-brand-border text-brand-white text-sm focus:outline-none focus:border-brand-orange"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold uppercase tracking-wider text-brand-secondary">
+                    Leader Department *
+                  </label>
+                  <select
+                    value={formData.leaderDepartment}
+                    onChange={(e) => setFormData({ ...formData, leaderDepartment: e.target.value })}
+                    className="w-full px-4 py-2.5 rounded-xl bg-background-elevated border border-brand-border text-brand-white text-sm focus:outline-none focus:border-brand-orange"
+                  >
+                    <option value="Computer Engineering">Computer Engineering</option>
+                    <option value="AI & Data Science">AI &amp; Data Science</option>
+                    <option value="Information Technology">Information Technology</option>
+                    <option value="Electronics & Telecommunication">Electronics &amp; Telecommunication</option>
+                    <option value="Mechanical Engineering">Mechanical Engineering</option>
+                    <option value="Civil Engineering">Civil Engineering</option>
+                    <option value="Chemical Engineering">Chemical Engineering</option>
+                    <option value="Design / Other">Design / Other</option>
+                  </select>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold uppercase tracking-wider text-brand-secondary">
+                    Academic Year *
+                  </label>
+                  <select
+                    value={formData.leaderYear}
+                    onChange={(e) => setFormData({ ...formData, leaderYear: e.target.value })}
+                    className="w-full px-4 py-2.5 rounded-xl bg-background-elevated border border-brand-border text-brand-white text-sm focus:outline-none focus:border-brand-orange"
+                  >
+                    <option value="First Year">First Year (FY)</option>
+                    <option value="Second Year">Second Year (SY)</option>
+                    <option value="Third Year">Third Year (TY)</option>
+                    <option value="Final Year">Final Year (B.Tech)</option>
+                  </select>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold uppercase tracking-wider text-brand-secondary">
+                    Division / Section
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g. A, B, C or Div 1"
+                    value={formData.leaderDivision}
+                    onChange={(e) => setFormData({ ...formData, leaderDivision: e.target.value })}
                     className="w-full px-4 py-2.5 rounded-xl bg-background-elevated border border-brand-border text-brand-white text-sm focus:outline-none focus:border-brand-orange"
                   />
                 </div>
@@ -702,14 +765,14 @@ export default function TechnexPage() {
                       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
                         <input
                           type="text"
-                          placeholder="Member Full Name"
+                          placeholder="Member Full Name *"
                           value={member.name}
                           onChange={(e) => updateMember(idx, "name", e.target.value)}
                           className="px-3 py-2 rounded-lg bg-background-card border border-brand-border text-brand-white text-xs"
                         />
                         <input
                           type="email"
-                          placeholder="Member Email"
+                          placeholder="Member Email *"
                           value={member.email}
                           onChange={(e) => updateMember(idx, "email", e.target.value)}
                           className="px-3 py-2 rounded-lg bg-background-card border border-brand-border text-brand-white text-xs"
@@ -726,6 +789,37 @@ export default function TechnexPage() {
                           placeholder="PRN / Roll Number"
                           value={member.prn}
                           onChange={(e) => updateMember(idx, "prn", e.target.value)}
+                          className="px-3 py-2 rounded-lg bg-background-card border border-brand-border text-brand-white text-xs"
+                        />
+                        <select
+                          value={member.department || "Computer Engineering"}
+                          onChange={(e) => updateMember(idx, "department", e.target.value)}
+                          className="px-3 py-2 rounded-lg bg-background-card border border-brand-border text-brand-white text-xs"
+                        >
+                          <option value="Computer Engineering">Computer Engineering</option>
+                          <option value="AI & Data Science">AI &amp; Data Science</option>
+                          <option value="Information Technology">Information Technology</option>
+                          <option value="Electronics & Telecommunication">Electronics &amp; Telecom</option>
+                          <option value="Mechanical Engineering">Mechanical Engineering</option>
+                          <option value="Civil Engineering">Civil Engineering</option>
+                          <option value="Chemical Engineering">Chemical Engineering</option>
+                          <option value="Design / Other">Design / Other</option>
+                        </select>
+                        <select
+                          value={member.year || "Third Year"}
+                          onChange={(e) => updateMember(idx, "year", e.target.value)}
+                          className="px-3 py-2 rounded-lg bg-background-card border border-brand-border text-brand-white text-xs"
+                        >
+                          <option value="First Year">First Year (FY)</option>
+                          <option value="Second Year">Second Year (SY)</option>
+                          <option value="Third Year">Third Year (TY)</option>
+                          <option value="Final Year">Final Year (B.Tech)</option>
+                        </select>
+                        <input
+                          type="text"
+                          placeholder="Division (e.g. A, B)"
+                          value={member.division || ""}
+                          onChange={(e) => updateMember(idx, "division", e.target.value)}
                           className="px-3 py-2 rounded-lg bg-background-card border border-brand-border text-brand-white text-xs"
                         />
                       </div>
@@ -821,7 +915,7 @@ export default function TechnexPage() {
               <div className="space-y-2">
                 <label className="text-xs font-bold uppercase tracking-wider text-[#FFF1DF] flex items-center justify-between">
                   <span>B. Payment Screenshot Proof *</span>
-                  <span className="text-[10px] text-brand-muted normal-case font-normal">PNG, JPG or JPEG (Max 10MB)</span>
+                  <span className="text-[10px] text-brand-muted normal-case font-normal">PNG, JPG, JPEG or WebP (Max 5MB)</span>
                 </label>
 
                 {!previewUrl ? (
@@ -835,13 +929,13 @@ export default function TechnexPage() {
                           Click or drag to upload payment screenshot
                         </span>
                         <span className="text-[10px] text-[#B8A99A] block mt-0.5">
-                          Accepts PNG, JPG or JPEG up to 10MB
+                          Accepts PNG, JPG, JPEG or WebP up to 5MB
                         </span>
                       </div>
                     </div>
                     <input
                       type="file"
-                      accept="image/png,image/jpeg,image/jpg"
+                      accept="image/png,image/jpeg,image/jpg,image/webp,.png,.jpg,.jpeg,.webp"
                       onChange={handleFileChange}
                       className="hidden"
                     />
@@ -873,7 +967,7 @@ export default function TechnexPage() {
                         Change
                         <input
                           type="file"
-                          accept="image/png,image/jpeg,image/jpg"
+                          accept="image/png,image/jpeg,image/jpg,image/webp,.png,.jpg,.jpeg,.webp"
                           onChange={handleFileChange}
                           className="hidden"
                         />

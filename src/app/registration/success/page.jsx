@@ -331,12 +331,26 @@ function SuccessContent() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
               <div className="p-3 rounded-xl bg-[#17110D] border border-brand-border">
                 <span className="text-brand-orange font-bold block">Leader: {registration.leaderName}</span>
-                <span className="text-brand-muted text-[11px]">PRN: {registration.leaderPrn || "N/A"} • {registration.leaderEmail}</span>
+                <span className="text-brand-muted text-[11px] block">
+                  PRN: {registration.leaderPrn || "N/A"} • {registration.leaderEmail}
+                </span>
+                {(registration.leaderDepartment || registration.leaderYear) && (
+                  <span className="text-brand-secondary text-[10px] block mt-0.5">
+                    {registration.leaderDepartment || ""}{registration.leaderYear ? ` • ${registration.leaderYear}` : ""}{registration.leaderDivision ? ` (Div ${registration.leaderDivision})` : ""}
+                  </span>
+                )}
               </div>
               {registration.teamMembers.map((m, idx) => (
                 <div key={idx} className="p-3 rounded-xl bg-[#17110D] border border-brand-border">
                   <span className="text-brand-white font-bold block">Member #{idx + 2}: {m.name}</span>
-                  <span className="text-brand-muted text-[11px]">{m.email} {m.prn ? `• PRN: ${m.prn}` : ""}</span>
+                  <span className="text-brand-muted text-[11px] block">
+                    {m.email} {m.prn ? `• PRN: ${m.prn}` : ""}
+                  </span>
+                  {(m.department || m.year) && (
+                    <span className="text-brand-secondary text-[10px] block mt-0.5">
+                      {m.department || ""}{m.year ? ` • ${m.year}` : ""}{m.division ? ` (Div ${m.division})` : ""}
+                    </span>
+                  )}
                 </div>
               ))}
             </div>

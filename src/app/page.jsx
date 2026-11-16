@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { getSettings, getTechnexConfig } from "@/lib/db";
 
+
 export const dynamic = "force-dynamic";
 
 export async function generateMetadata() {

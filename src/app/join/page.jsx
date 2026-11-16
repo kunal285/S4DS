@@ -1,5 +1,6 @@
 import UnderDevelopment from "@/components/UnderDevelopment";
 
+
 export const metadata = {
   title: "Join S4DS | S4DS MITAOE",
   description:

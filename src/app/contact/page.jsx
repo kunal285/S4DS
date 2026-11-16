@@ -53,9 +53,9 @@ export default function ContactPage() {
   };
 
   const whatsappUrl =
-    settings?.technexWhatsappUrl ||
     settings?.technex?.whatsappUrl ||
-    "https://chat.whatsapp.com/KFYW22NYGasBag1RZjnKJl";
+    settings?.technexWhatsappUrl ||
+    null;
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 space-y-16">
@@ -103,7 +103,7 @@ export default function ContactPage() {
                 </div>
               </div>
 
-              {settings?.technexWhatsappEnabled !== false && (
+              {whatsappUrl && settings?.technexWhatsappEnabled !== false && (
                 <div className="pt-2 border-t border-brand-border/60">
                   <a
                     href={whatsappUrl}

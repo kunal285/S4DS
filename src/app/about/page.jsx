@@ -15,6 +15,7 @@ import {
   ArrowRight,
 } from "lucide-react";
 
+
 export const dynamic = "force-dynamic";
 
 export async function generateMetadata() {
@@ -33,28 +34,27 @@ export default async function AboutPage() {
   const settings = await getSettings();
   const about = settings.about || {};
 
-  const values = [
+  const VALUE_ICONS = [Cpu, Users, BookOpen, Compass];
+  const DEFAULT_VALUES = [
     {
       title: "Hands-on Technical Rigor",
       desc: "Moving beyond basic theory into production-ready deep learning, MLOps, LLMs, and enterprise distributed computing.",
-      icon: Cpu,
     },
     {
       title: "Inclusive Student Community",
       desc: "Creating an open peer ecosystem where First Year students collaborate alongside final-year researchers and industry mentors.",
-      icon: Users,
     },
     {
       title: "Applied Research & Publishing",
       desc: "Guiding students to write, review, and present technical research papers at national and international conferences.",
-      icon: BookOpen,
     },
     {
       title: "Industry & Ecosystem Alignment",
       desc: "Partnering with tech enterprises to host project expos, real-world case study hackathons, and placement masterclasses.",
-      icon: Compass,
     },
   ];
+  const rawValues = about.values?.length ? about.values : DEFAULT_VALUES;
+  const values = rawValues.map((v, i) => ({ ...v, icon: VALUE_ICONS[i % VALUE_ICONS.length] }));
 
   const stats = about.stats || [
     { label: "Active Members", value: "250+" },

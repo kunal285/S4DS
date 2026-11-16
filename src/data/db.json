@@ -260,6 +260,50 @@
   "memberships": [],
   "technexRegistrations": [
     {
+      "id": "technex-1794867678881",
+      "registrationId": "TNX-2026-006",
+      "registrationCode": "TNX-2026-006",
+      "confirmationToken": "143aebddb7a9d1638ebcb218107c5f9a5c5632a6bed5cfca",
+      "membershipType": "S4DS Member",
+      "registrationFee": 49,
+      "teamName": "Test Alpha Team 1794867669619",
+      "projectTitle": "AI Distributed Optimization Engine",
+      "domain": "Artificial Intelligence & ML",
+      "abstractSummary": "Novel distributed algorithm for federated edge machine learning.",
+      "githubOrDriveUrl": "https://github.com/s4ds-mitaoe/ai-engine",
+      "leaderName": "Harshvardhan Shinde",
+      "leaderEmail": "leadertest_1794867669619@mitaoe.ac.in",
+      "leaderPhone": "9876543210",
+      "leaderCollege": "MIT Academy of Engineering, Pune",
+      "leaderPrn": "2026PRN1528",
+      "leaderDepartment": "AI & Data Science",
+      "leaderYear": "Third Year",
+      "leaderDivision": "B",
+      "teamMembers": [
+        {
+          "name": "Neha Kulkarni",
+          "email": "neha.k@mitaoe.ac.in",
+          "phone": "9123456780",
+          "prn": "2026PRN8899",
+          "department": "Computer Engineering",
+          "year": "Third Year",
+          "division": "B"
+        }
+      ],
+      "utr": "UPI789654123456",
+      "paymentScreenshotUrl": "https://cflqsjjkekfrnjjbhuja.supabase.co/storage/v1/object/sign/s4ds-media/payment/screenshots/1794867674206_payment-receipt.webp?token=eyJraWQiOiJlNTQ5NzkzZi00NDc3LTQ4NjUtYTVkOC1mZWMwMjEzNWI5Y2QiLCJhbGciOiJFUzI1NiJ9.eyJ1cmwiOiJzNGRzLW1lZGlhL3BheW1lbnQvc2NyZWVuc2hvdHMvMTc5NDg2NzY3NDIwNl9wYXltZW50LXJlY2VpcHQud2VicCIsInNjb3BlIjoiZG93bmxvYWQiLCJpYXQiOjE3OTQ4Njc2NzcsImV4cCI6MTc5NDg3MTI3N30.IshwDRAs8952ErjrMUxsIwIB4GhlM742nWEVt11weGKUCi8T8b7l6gTNKjTxO3WvN912y3lAifOV12G1H6nR5Q",
+      "paymentScreenshotPath": "payment/screenshots/1794867674206_payment-receipt.webp",
+      "paymentScreenshotFileName": "payment-receipt.webp",
+      "paymentScreenshotFileSize": 70,
+      "paymentScreenshotMimeType": "image/webp",
+      "paymentScreenshotUploadedAt": "2026-11-16T22:21:12.596Z",
+      "paymentScreenshotMediaId": "media-1794867675477-ptdd",
+      "registrationStatus": "Successfully Registered",
+      "status": "Approved",
+      "createdAt": "2026-11-16T22:21:18.881Z",
+      "__id": "01a1e673-5881-72d1-aa97-8eb8b8635c3a"
+    },
+    {
       "id": "technex-1794866764108",
       "registrationId": "TNX-2026-005",
       "registrationCode": "TNX-2026-005",
@@ -416,6 +460,36 @@
     }
   ],
   "mediaItems": [
+    {
+      "id": "media-1794867686749-hthv",
+      "title": "Payment Proof - Test Alpha Team 1794867669619",
+      "fileName": "proof.png",
+      "category": "payment-screenshot",
+      "folder": "events/posters",
+      "storagePath": "payment/screenshots/1794867686032_proof.png",
+      "fileUrl": "https://cflqsjjkekfrnjjbhuja.supabase.co/storage/v1/object/sign/s4ds-media/payment/screenshots/1794867686032_proof.png?token=eyJraWQiOiJlNTQ5NzkzZi00NDc3LTQ4NjUtYTVkOC1mZWMwMjEzNWI5Y2QiLCJhbGciOiJFUzI1NiJ9.eyJ1cmwiOiJzNGRzLW1lZGlhL3BheW1lbnQvc2NyZWVuc2hvdHMvMTc5NDg2NzY4NjAzMl9wcm9vZi5wbmciLCJzY29wZSI6ImRvd25sb2FkIiwiaWF0IjoxNzk0ODY3Njg4LCJleHAiOjE3OTQ4NzEyODh9.NHQvYPcS0VlUQy2ojNS7sW1lr_HYhuTLLquV_vXOpHQvZVJCnMfr98F6UzFQE7cMerYBfxKl91VtRsniNMNcbA",
+      "fileSize": 70,
+      "mimeType": "image/png",
+      "isPrivate": true,
+      "isActive": true,
+      "associatedRecordId": null,
+      "createdAt": "2026-11-16T22:21:26.749Z"
+    },
+    {
+      "id": "media-1794867675477-ptdd",
+      "title": "Payment Proof - Test Alpha Team 1794867669619",
+      "fileName": "payment-receipt.webp",
+      "category": "payment-screenshot",
+      "folder": "events/posters",
+      "storagePath": "payment/screenshots/1794867674206_payment-receipt.webp",
+      "fileUrl": "https://cflqsjjkekfrnjjbhuja.supabase.co/storage/v1/object/sign/s4ds-media/payment/screenshots/1794867674206_payment-receipt.webp?token=eyJraWQiOiJlNTQ5NzkzZi00NDc3LTQ4NjUtYTVkOC1mZWMwMjEzNWI5Y2QiLCJhbGciOiJFUzI1NiJ9.eyJ1cmwiOiJzNGRzLW1lZGlhL3BheW1lbnQvc2NyZWVuc2hvdHMvMTc5NDg2NzY3NDIwNl9wYXltZW50LXJlY2VpcHQud2VicCIsInNjb3BlIjoiZG93bmxvYWQiLCJpYXQiOjE3OTQ4Njc2NzcsImV4cCI6MTc5NDg3MTI3N30.IshwDRAs8952ErjrMUxsIwIB4GhlM742nWEVt11weGKUCi8T8b7l6gTNKjTxO3WvN912y3lAifOV12G1H6nR5Q",
+      "fileSize": 70,
+      "mimeType": "image/webp",
+      "isPrivate": true,
+      "isActive": true,
+      "associatedRecordId": null,
+      "createdAt": "2026-11-16T22:21:15.477Z"
+    },
     {
       "id": "media-1794866787249-nnfb",
       "title": "Payment Proof - Test Team Apex 1794866753549",

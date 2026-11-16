@@ -21,8 +21,11 @@ export async function GET(request) {
     const status = searchParams.get("status");
     const membershipType = searchParams.get("membershipType");
     const domain = searchParams.get("domain");
+    const department = searchParams.get("department");
+    const academicYear = searchParams.get("academicYear");
+    const sortBy = searchParams.get("sortBy") || "newest";
 
-    const registrations = await getTechnexRegistrations({ search, status, membershipType, domain });
+    const registrations = await getTechnexRegistrations({ search, status, membershipType, domain, department, academicYear, sortBy });
 
     // Refresh signed URLs for private payment screenshots so administrators can view them securely
     const refreshed = await Promise.all(
@@ -77,6 +80,9 @@ export async function POST(request) {
         leaderPhone: formData.get("leaderPhone"),
         leaderCollege: formData.get("leaderCollege"),
         leaderPrn: formData.get("leaderPrn"),
+        leaderDepartment: formData.get("leaderDepartment") || "",
+        leaderYear: formData.get("leaderYear") || "",
+        leaderDivision: formData.get("leaderDivision") || "",
         teamMembers: parsedMembers,
         utr: formData.get("utr") || formData.get("upiTransactionId"),
         paymentScreenshotUrl: formData.get("paymentScreenshotUrl") || "",
@@ -98,6 +104,9 @@ export async function POST(request) {
       leaderPhone,
       leaderCollege,
       leaderPrn,
+      leaderDepartment,
+      leaderYear,
+      leaderDivision,
       teamMembers,
       utr,
     } = data;
@@ -189,20 +198,37 @@ export async function POST(request) {
     // 2. Payment Screenshot Validation & Supabase Storage Upload
     let paymentScreenshotUrl = data.paymentScreenshotUrl || "";
     let paymentScreenshotPath = data.paymentScreenshotPath || "";
+    let screenshotFileName = "";
+    let screenshotFileSize = 0;
+    let screenshotMimeType = "";
+    let screenshotUploadedAt = "";
 
     if (screenshotFile && typeof screenshotFile !== "string") {
-      const allowedMimes = ["image/png", "image/jpeg", "image/jpg"];
+      const allowedMimes = ["image/png", "image/jpeg", "image/jpg", "image/webp"];
       if (!allowedMimes.includes(screenshotFile.type)) {
         return NextResponse.json(
-          { error: "Payment screenshot must be a PNG, JPG, or JPEG image." },
+          { error: "Payment screenshot must be a PNG, JPG, JPEG, or WebP image." },
           { status: 400 }
         );
       }
+
+      if (screenshotFile.size > 5 * 1024 * 1024) {
+        return NextResponse.json(
+          { error: "Payment screenshot file size must not exceed 5MB." },
+          { status: 400 }
+        );
+      }
+
+      screenshotFileName = screenshotFile.name || "payment-proof.png";
+      screenshotFileSize = screenshotFile.size || 0;
+      screenshotMimeType = screenshotFile.type || "image/png";
+      screenshotUploadedAt = new Date().toISOString();
+
       const buffer = Buffer.from(await screenshotFile.arrayBuffer());
       const uploadResult = await uploadToSupabase({
         fileBuffer: buffer,
-        fileName: screenshotFile.name || "payment-proof.png",
-        mimeType: screenshotFile.type,
+        fileName: screenshotFileName,
+        mimeType: screenshotMimeType,
         category: "payment-screenshot",
         isPrivate: true,
       });
@@ -214,11 +240,11 @@ export async function POST(request) {
         const mediaRecord = await createMediaItem({
           title: `Payment Proof - ${teamName.trim()}`,
           category: "payment-screenshot",
-          fileName: screenshotFile.name || "payment-proof.png",
+          fileName: screenshotFileName,
           storagePath: uploadResult.storagePath,
           fileUrl: uploadResult.fileUrl,
-          fileSize: uploadResult.fileSize || 0,
-          mimeType: screenshotFile.type || "image/png",
+          fileSize: screenshotFileSize,
+          mimeType: screenshotMimeType,
           isPrivate: true,
           isActive: true,
         });
@@ -257,10 +283,17 @@ export async function POST(request) {
       leaderPhone: phoneClean,
       leaderCollege: leaderCollege.trim(),
       leaderPrn: leaderPrn.trim(),
+      leaderDepartment: (leaderDepartment || "").trim(),
+      leaderYear: (leaderYear || "").trim(),
+      leaderDivision: (leaderDivision || "").trim(),
       teamMembers: Array.isArray(teamMembers) ? teamMembers : [],
       utr: trimmedUtr,
       paymentScreenshotUrl,
       paymentScreenshotPath,
+      paymentScreenshotFileName: screenshotFileName,
+      paymentScreenshotFileSize: screenshotFileSize,
+      paymentScreenshotMimeType: screenshotMimeType,
+      paymentScreenshotUploadedAt: screenshotUploadedAt,
       paymentScreenshotMediaId: data.paymentScreenshotMediaId || null,
       registrationStatus: "Successfully Registered",
       status: "Approved",

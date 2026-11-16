@@ -985,7 +985,7 @@ export async function deleteMembership(id) {
 // ─────────────────────────────────────────────
 // TECHNEX 2K26 REGISTRATIONS
 // ─────────────────────────────────────────────
-export async function getTechnexRegistrations({ search, status, membershipType, domain, paymentStatus } = {}) {
+export async function getTechnexRegistrations({ search, status, membershipType, domain, department, academicYear, sortBy = "newest", paymentStatus } = {}) {
   try {
     if (await isRushDBConnected()) {
       const catalog = await getSchemaCatalog();
@@ -995,6 +995,8 @@ export async function getTechnexRegistrations({ search, status, membershipType, 
         if (membershipType && membershipType !== "All") where.membershipType = membershipType;
         if (paymentStatus && paymentStatus !== "All") where.paymentStatus = paymentStatus;
         if (domain && domain !== "All") where.domain = domain;
+        if (department && department !== "All") where.leaderDepartment = department;
+        if (academicYear && academicYear !== "All") where.leaderYear = academicYear;
         let list = await findRecords("TECHNEX_REGISTRATION", { where });
         if (search) {
           const s = search.toLowerCase();
@@ -1006,10 +1008,22 @@ export async function getTechnexRegistrations({ search, status, membershipType, 
               r.projectTitle?.toLowerCase().includes(s) ||
               r.leaderName?.toLowerCase().includes(s) ||
               r.leaderEmail?.toLowerCase().includes(s) ||
-              r.leaderPrn?.toLowerCase().includes(s)
+              r.leaderPrn?.toLowerCase().includes(s) ||
+              r.leaderDepartment?.toLowerCase().includes(s) ||
+              r.domain?.toLowerCase().includes(s) ||
+              (r.teamMembers || []).some(
+                (m) =>
+                  m.name?.toLowerCase().includes(s) ||
+                  m.email?.toLowerCase().includes(s) ||
+                  m.prn?.toLowerCase().includes(s)
+              )
           );
         }
-        return list.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+        return list.sort((a, b) =>
+          sortBy === "oldest"
+            ? new Date(a.createdAt) - new Date(b.createdAt)
+            : new Date(b.createdAt) - new Date(a.createdAt)
+        );
       }
     }
   } catch (err) {
@@ -1031,6 +1045,12 @@ export async function getTechnexRegistrations({ search, status, membershipType, 
   if (domain && domain !== "All") {
     list = list.filter((r) => r.domain && r.domain.toLowerCase() === domain.toLowerCase());
   }
+  if (department && department !== "All") {
+    list = list.filter((r) => r.leaderDepartment && r.leaderDepartment.toLowerCase() === department.toLowerCase());
+  }
+  if (academicYear && academicYear !== "All") {
+    list = list.filter((r) => r.leaderYear && r.leaderYear.toLowerCase() === academicYear.toLowerCase());
+  }
   if (search) {
     const s = search.toLowerCase();
     list = list.filter(
@@ -1041,10 +1061,22 @@ export async function getTechnexRegistrations({ search, status, membershipType, 
         r.projectTitle?.toLowerCase().includes(s) ||
         r.leaderName?.toLowerCase().includes(s) ||
         r.leaderEmail?.toLowerCase().includes(s) ||
-        r.leaderPrn?.toLowerCase().includes(s)
+        r.leaderPrn?.toLowerCase().includes(s) ||
+        r.leaderDepartment?.toLowerCase().includes(s) ||
+        r.domain?.toLowerCase().includes(s) ||
+        (r.teamMembers || []).some(
+          (m) =>
+            m.name?.toLowerCase().includes(s) ||
+            m.email?.toLowerCase().includes(s) ||
+            m.prn?.toLowerCase().includes(s)
+        )
     );
   }
-  return list.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+  return list.sort((a, b) =>
+    sortBy === "oldest"
+      ? new Date(a.createdAt) - new Date(b.createdAt)
+      : new Date(b.createdAt) - new Date(a.createdAt)
+  );
 }
 
 export async function checkTechnexDuplicate({ teamName, leaderEmail, leaderPrn }) {
@@ -1124,10 +1156,17 @@ export async function createTechnexRegistration(data) {
     leaderPhone: data.leaderPhone.trim(),
     leaderCollege: data.leaderCollege.trim(),
     leaderPrn: data.leaderPrn.toUpperCase().trim(),
+    leaderDepartment: (data.leaderDepartment || "").trim(),
+    leaderYear: (data.leaderYear || "").trim(),
+    leaderDivision: (data.leaderDivision || "").trim(),
     teamMembers: Array.isArray(data.teamMembers) ? data.teamMembers : [],
     utr: (data.utr || data.upiTransactionId || "").trim(),
     paymentScreenshotUrl: data.paymentScreenshotUrl || "",
     paymentScreenshotPath: data.paymentScreenshotPath || "",
+    paymentScreenshotFileName: data.paymentScreenshotFileName || "",
+    paymentScreenshotFileSize: Number(data.paymentScreenshotFileSize) || 0,
+    paymentScreenshotMimeType: data.paymentScreenshotMimeType || "",
+    paymentScreenshotUploadedAt: data.paymentScreenshotUploadedAt || new Date().toISOString(),
     paymentScreenshotMediaId: data.paymentScreenshotMediaId || null,
     registrationStatus: "Successfully Registered",
     status: data.status || "Approved",
@@ -1486,6 +1525,24 @@ export function getDefaultSettings() {
         { label: "Hackathons & Challenges", value: "12+" },
         { label: "Projects Incubated", value: "40+" },
       ],
+      values: [
+        {
+          title: "Hands-on Technical Rigor",
+          desc: "Moving beyond basic theory into production-ready deep learning, MLOps, LLMs, and enterprise distributed computing.",
+        },
+        {
+          title: "Inclusive Student Community",
+          desc: "Creating an open peer ecosystem where First Year students collaborate alongside final-year researchers and industry mentors.",
+        },
+        {
+          title: "Applied Research & Publishing",
+          desc: "Guiding students to write, review, and present technical research papers at national and international conferences.",
+        },
+        {
+          title: "Industry & Ecosystem Alignment",
+          desc: "Partnering with tech enterprises to host project expos, real-world case study hackathons, and placement masterclasses.",
+        },
+      ],
     },
 
     technex: {
@@ -1522,6 +1579,34 @@ export function getDefaultSettings() {
         "IoT, Robotics & Embedded Systems",
         "Cloud Architecture & DevOps",
         "Open Track: Interdisciplinary Innovation",
+      ],
+    },
+
+    membership: {
+      intakeBadge: "Cohort Admissions",
+      intakeTitle: "Join Society for Data Science, MITAOE",
+      intakeSchedule: "Intake Starts February 2027",
+      intakeDescription:
+        "Official enrollment for the S4DS MITAOE Student Chapter cohort will officially launch in February 2027. Explore membership privileges, eligibility guidelines, and upcoming term roadmap below.",
+      status: "Scheduled",
+      timeline: [
+        { label: "Registration Portal Launch", date: "February 2027" },
+        { label: "Chapter Orientation & Induction", date: "February 2027 (MITAOE Auditorium)" },
+        { label: "Member Kit & Certificate Allocation", date: "February 2027" },
+        { label: "Active Chapter Term", date: "Academic Year 2027" },
+      ],
+      benefits: [
+        "Official S4DS National Student Member Certificate & Membership Kit",
+        "Priority access & discounted entry to TECHNEX 2K26 Project Expo",
+        "Closed-door masterclasses in Generative AI, LLMs, Computer Vision & MLOps",
+        "Direct eligibility to join chapter technical committees & project teams",
+        "Exclusive placement prep bootcamps, resume reviews & industry referrals",
+      ],
+      eligibility: [
+        "Open to all enrolled students of MIT Academy of Engineering (MITAOE), Alandi.",
+        "Students across all engineering departments (Data Science, AI, Computer, IT, ENTC, Mechanical, Chemical, Civil).",
+        "First Year, Second Year, Third Year, and Final Year B.Tech students are eligible.",
+        "Passionate about Data Science, Machine Learning, Web Innovation, and Technical Leadership.",
       ],
     },
 
@@ -1759,12 +1844,21 @@ export async function getTechnexRegistrationById(id) {
     leaderPhone: reg.leaderPhone,
     leaderCollege: reg.leaderCollege,
     leaderPrn: reg.leaderPrn,
+    leaderDepartment: reg.leaderDepartment || "",
+    leaderYear: reg.leaderYear || "",
+    leaderDivision: reg.leaderDivision || "",
     membershipType: reg.membershipType,
     registrationFee: reg.registrationFee,
     registrationStatus: "Successfully Registered",
     status: reg.status || "Approved",
     teamMembers: reg.teamMembers || [],
     utr: reg.utr || "",
+    paymentScreenshotUrl: reg.paymentScreenshotUrl || "",
+    paymentScreenshotPath: reg.paymentScreenshotPath || "",
+    paymentScreenshotFileName: reg.paymentScreenshotFileName || "",
+    paymentScreenshotFileSize: reg.paymentScreenshotFileSize || 0,
+    paymentScreenshotMimeType: reg.paymentScreenshotMimeType || "",
+    paymentScreenshotUploadedAt: reg.paymentScreenshotUploadedAt || reg.createdAt,
     createdAt: reg.createdAt,
     eventTitle: technex.title || "TECHNEX 2K26 – THE PROJECT EXPO",
     eventDate: technex.date || "Nov 28, 2026",

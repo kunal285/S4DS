@@ -2,6 +2,7 @@ import "./globals.css";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 
+
 export const metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || "https://s4ds.mitaoe.vercel.app"),
   title: "S4DS MITAOE | Society for Data Science Student Chapter",

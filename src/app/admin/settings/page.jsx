@@ -61,6 +61,14 @@ export default function AdminSettingsPage() {
       facultyDepartment: "",
       facultyCollege: "",
       facultyBio: "",
+      values: [],
+    },
+    membership: {
+      intakeBadge: "Cohort Admissions",
+      intakeTitle: "Join Society for Data Science, MITAOE",
+      intakeSchedule: "Intake Starts February 2027",
+      intakeDescription: "",
+      status: "Scheduled",
     },
     announcement: {
       enabled: true,
@@ -128,6 +136,14 @@ export default function AdminSettingsPage() {
             facultyDepartment: d.about?.facultyDepartment || "",
             facultyCollege: d.about?.facultyCollege || "",
             facultyBio: d.about?.facultyBio || "",
+            values: Array.isArray(d.about?.values) ? d.about.values : [],
+          },
+          membership: {
+            intakeBadge: d.membership?.intakeBadge || "Cohort Admissions",
+            intakeTitle: d.membership?.intakeTitle || "Join Society for Data Science, MITAOE",
+            intakeSchedule: d.membership?.intakeSchedule || "Intake Starts February 2027",
+            intakeDescription: d.membership?.intakeDescription || "",
+            status: d.membership?.status || "Scheduled",
           },
           announcement: {
             enabled: d.announcement?.enabled !== false,
@@ -219,6 +235,7 @@ export default function AdminSettingsPage() {
     { id: "homepage", label: "Homepage CMS", icon: Home },
     { id: "about", label: "About Chapter", icon: Info },
     { id: "contact", label: "Contact & Social", icon: Phone },
+    { id: "membership", label: "Membership Hub", icon: Users },
     { id: "announcement", label: "Announcements", icon: Bell },
     { id: "availability", label: "Launch & Pages", icon: Layers },
   ];
@@ -508,6 +525,63 @@ export default function AdminSettingsPage() {
                 />
               </div>
             </div>
+
+            {/* Core Values / Pillars */}
+            <div className="space-y-3 pt-2 border-t border-brand-border">
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-semibold text-brand-secondary uppercase tracking-wider">Core Pillars / Values</label>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const newValues = [...(settings.about.values || []), { title: "", desc: "" }];
+                    updateNested("about", "values", newValues);
+                  }}
+                  className="text-xs px-3 py-1 rounded-lg bg-brand-orange/15 border border-brand-orange/40 text-brand-orange hover:bg-brand-orange/25 transition-colors"
+                >
+                  + Add Pillar
+                </button>
+              </div>
+              {(settings.about.values || []).length === 0 && (
+                <p className="text-xs text-brand-muted italic">No custom pillars defined — using system defaults.</p>
+              )}
+              {(settings.about.values || []).map((val, idx) => (
+                <div key={idx} className="p-4 rounded-xl bg-background-elevated border border-brand-border space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-brand-orange">Pillar {idx + 1}</span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const updated = settings.about.values.filter((_, i) => i !== idx);
+                        updateNested("about", "values", updated);
+                      }}
+                      className="text-xs text-red-400 hover:text-red-300 transition-colors"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                  <input
+                    type="text"
+                    value={val.title}
+                    onChange={(e) => {
+                      const updated = settings.about.values.map((v, i) => i === idx ? { ...v, title: e.target.value } : v);
+                      updateNested("about", "values", updated);
+                    }}
+                    placeholder="e.g. Hands-on Technical Rigor"
+                    className="w-full px-3 py-2 rounded-lg bg-background-card border border-brand-border text-xs text-white focus:outline-none focus:border-brand-orange"
+                  />
+                  <textarea
+                    rows={2}
+                    value={val.desc}
+                    onChange={(e) => {
+                      const updated = settings.about.values.map((v, i) => i === idx ? { ...v, desc: e.target.value } : v);
+                      updateNested("about", "values", updated);
+                    }}
+                    placeholder="Short description of this pillar..."
+                    className="w-full px-3 py-2 rounded-lg bg-background-card border border-brand-border text-xs text-white focus:outline-none focus:border-brand-orange resize-none"
+                  />
+                </div>
+              ))}
+            </div>
           </div>
         )}
 
@@ -595,6 +669,74 @@ export default function AdminSettingsPage() {
                   onChange={(e) => updateNested("socialLinks", "website", e.target.value)}
                   placeholder="https://mitaoe.ac.in"
                   className="w-full px-4 py-2.5 rounded-xl bg-background-elevated border border-brand-border text-xs text-white focus:outline-none focus:border-brand-orange"
+                />
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ── TAB: Membership Hub ── */}
+        {activeTab === "membership" && (
+          <div className="p-6 sm:p-8 rounded-3xl bg-background-card border border-brand-border space-y-6 shadow-xl">
+            <h2 className="text-lg font-black text-brand-white border-b border-brand-border pb-3 flex items-center gap-2">
+              <Users className="w-5 h-5 text-brand-orange" /> Chapter Membership Portal CMS
+            </h2>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-brand-secondary">Intake Badge</label>
+                <input
+                  type="text"
+                  value={settings.membership?.intakeBadge || ""}
+                  onChange={(e) => updateNested("membership", "intakeBadge", e.target.value)}
+                  placeholder="Cohort Admissions"
+                  className="w-full px-4 py-2.5 rounded-xl bg-background-elevated border border-brand-border text-xs text-white focus:outline-none focus:border-brand-orange"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-brand-secondary">Status Label</label>
+                <select
+                  value={settings.membership?.status || "Scheduled"}
+                  onChange={(e) => updateNested("membership", "status", e.target.value)}
+                  className="w-full px-4 py-2.5 rounded-xl bg-background-elevated border border-brand-border text-xs text-white focus:outline-none focus:border-brand-orange"
+                >
+                  <option value="Scheduled">Scheduled</option>
+                  <option value="Open">Open</option>
+                  <option value="Closed">Closed</option>
+                </select>
+              </div>
+
+              <div className="space-y-1.5 md:col-span-2">
+                <label className="text-xs font-semibold text-brand-secondary">Intake Title</label>
+                <input
+                  type="text"
+                  value={settings.membership?.intakeTitle || ""}
+                  onChange={(e) => updateNested("membership", "intakeTitle", e.target.value)}
+                  placeholder="Join Society for Data Science, MITAOE"
+                  className="w-full px-4 py-2.5 rounded-xl bg-background-elevated border border-brand-border text-xs text-white focus:outline-none focus:border-brand-orange"
+                />
+              </div>
+
+              <div className="space-y-1.5 md:col-span-2">
+                <label className="text-xs font-semibold text-brand-secondary">Intake Schedule / Date Header</label>
+                <input
+                  type="text"
+                  value={settings.membership?.intakeSchedule || ""}
+                  onChange={(e) => updateNested("membership", "intakeSchedule", e.target.value)}
+                  placeholder="Intake Starts February 2027"
+                  className="w-full px-4 py-2.5 rounded-xl bg-background-elevated border border-brand-border text-xs text-white focus:outline-none focus:border-brand-orange"
+                />
+              </div>
+
+              <div className="space-y-1.5 md:col-span-2">
+                <label className="text-xs font-semibold text-brand-secondary">Intake Description</label>
+                <textarea
+                  rows={3}
+                  value={settings.membership?.intakeDescription || ""}
+                  onChange={(e) => updateNested("membership", "intakeDescription", e.target.value)}
+                  placeholder="Official enrollment for the S4DS student chapter cohort will launch soon..."
+                  className="w-full px-4 py-2.5 rounded-xl bg-background-elevated border border-brand-border text-xs text-white focus:outline-none focus:border-brand-orange resize-none"
                 />
               </div>
             </div>
