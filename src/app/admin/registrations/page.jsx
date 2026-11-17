@@ -24,6 +24,7 @@ import {
   ChevronRight,
   GraduationCap,
   Layers,
+  Trash2,
 } from "lucide-react";
 import Toast from "@/components/Toast";
 import LoadingSkeleton from "@/components/LoadingSkeleton";
@@ -144,6 +145,41 @@ export default function AdminRegistrationsPage() {
       }
     } catch {
       setToast({ type: "error", message: "Network error updating status" });
+    }
+  };
+
+  const handleDelete = async (id, title) => {
+    if (!id) return;
+    const itemTitle = title || id;
+    if (
+      !window.confirm(
+        `Are you sure you want to permanently delete registration "${itemTitle}"? This will remove it from the database and cannot be undone.`
+      )
+    ) {
+      return;
+    }
+
+    const token = typeof window !== "undefined" ? localStorage.getItem("s4ds_admin_token") : null;
+    const headers = token ? { Authorization: `Bearer ${token}` } : {};
+
+    try {
+      const url = tab === "technex" ? `/api/technex/${id}` : `/api/membership/${id}`;
+      const res = await fetch(url, {
+        method: "DELETE",
+        headers,
+      });
+      const data = await res.json();
+      if (data.success) {
+        setToast({ type: "success", message: `Registration "${itemTitle}" deleted successfully.` });
+        if (selectedRecord && (selectedRecord.id === id || selectedRecord.registrationCode === id)) {
+          setSelectedRecord(null);
+        }
+        fetchData();
+      } else {
+        setToast({ type: "error", message: data.error || "Failed to delete registration" });
+      }
+    } catch {
+      setToast({ type: "error", message: "Network error deleting registration" });
     }
   };
 
@@ -621,13 +657,22 @@ export default function AdminRegistrationsPage() {
                       </span>
                     </td>
                     <td className="px-5 py-4 text-right">
-                      <button
-                        onClick={() => setSelectedRecord(item)}
-                        className="p-1.5 rounded-lg bg-background-elevated hover:bg-background-secondary text-brand-secondary hover:text-brand-white border border-brand-border transition-colors"
-                        title="Inspect Team Details"
-                      >
-                        <Eye className="w-4 h-4" />
-                      </button>
+                      <div className="flex items-center justify-end gap-1.5">
+                        <button
+                          onClick={() => setSelectedRecord(item)}
+                          className="p-1.5 rounded-lg bg-background-elevated hover:bg-background-secondary text-brand-secondary hover:text-brand-white border border-brand-border transition-colors"
+                          title="Inspect Team Details"
+                        >
+                          <Eye className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => handleDelete(item.id || item.registrationCode, item.teamName || item.registrationCode)}
+                          className="p-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/25 text-rose-400 hover:text-rose-200 border border-rose-500/30 transition-colors"
+                          title="Delete Registration Record"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -738,13 +783,22 @@ export default function AdminRegistrationsPage() {
                       </span>
                     </td>
                     <td className="px-5 py-4 text-right">
-                      <button
-                        onClick={() => setSelectedRecord(item)}
-                        className="p-1.5 rounded-lg bg-background-elevated hover:bg-background-secondary text-brand-secondary hover:text-brand-white border border-brand-border transition-colors"
-                        title="Inspect Application"
-                      >
-                        <Eye className="w-4 h-4" />
-                      </button>
+                      <div className="flex items-center justify-end gap-1.5">
+                        <button
+                          onClick={() => setSelectedRecord(item)}
+                          className="p-1.5 rounded-lg bg-background-elevated hover:bg-background-secondary text-brand-secondary hover:text-brand-white border border-brand-border transition-colors"
+                          title="Inspect Application"
+                        >
+                          <Eye className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => handleDelete(item.id, item.fullName || item.email)}
+                          className="p-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/25 text-rose-400 hover:text-rose-200 border border-rose-500/30 transition-colors"
+                          title="Delete Application Record"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -1064,7 +1118,22 @@ export default function AdminRegistrationsPage() {
               </div>
             )}
 
-            <div className="flex justify-end pt-2">
+            <div className="flex items-center justify-between pt-2 border-t border-brand-border/60">
+              <button
+                type="button"
+                onClick={() =>
+                  handleDelete(
+                    selectedRecord.id || selectedRecord.registrationCode,
+                    tab === "technex"
+                      ? selectedRecord.teamName || selectedRecord.registrationCode
+                      : selectedRecord.fullName || selectedRecord.email
+                  )
+                }
+                className="px-4 py-2 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 hover:text-rose-200 border border-rose-500/30 text-xs font-semibold flex items-center gap-1.5 transition-colors"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                Delete {tab === "technex" ? "Registration" : "Application"}
+              </button>
               <button
                 onClick={() => setSelectedRecord(null)}
                 className="px-5 py-2 rounded-xl bg-background-card border border-brand-border text-brand-secondary hover:text-brand-white text-xs transition-colors"

@@ -1376,10 +1376,29 @@ export async function updateTechnexStatus(id, updatePayload) {
 }
 
 export async function deleteTechnexRegistration(id) {
+  if (!id) return false;
+  const idStr = String(id).trim();
+  clearDbCache();
+
   try {
     if (await isRushDBConnected()) {
       await getSchemaCatalog();
-      await deleteRecord("TECHNEX_REGISTRATION", id);
+      const deleted = await deleteRecord("TECHNEX_REGISTRATION", idStr);
+      if (!deleted) {
+        const recs = await findRecords("TECHNEX_REGISTRATION");
+        const match = (recs || []).find(
+          (r) =>
+            r.id === idStr ||
+            r.registrationCode === idStr ||
+            r.registrationId === idStr ||
+            r.id?.toLowerCase() === idStr.toLowerCase() ||
+            r.registrationCode?.toLowerCase() === idStr.toLowerCase() ||
+            r.registrationId?.toLowerCase() === idStr.toLowerCase()
+        );
+        if (match && match.id) {
+          await deleteRecord("TECHNEX_REGISTRATION", match.id);
+        }
+      }
     }
   } catch (err) {
     console.warn("RushDB deleteTechnexRegistration fallback:", err.message);
@@ -1387,8 +1406,17 @@ export async function deleteTechnexRegistration(id) {
 
   const db = getFileDb();
   const initialLen = (db.technexRegistrations || []).length;
-  db.technexRegistrations = (db.technexRegistrations || []).filter((r) => r.id !== id);
+  db.technexRegistrations = (db.technexRegistrations || []).filter(
+    (r) =>
+      r.id !== idStr &&
+      r.registrationCode !== idStr &&
+      r.registrationId !== idStr &&
+      r.id?.toLowerCase() !== idStr.toLowerCase() &&
+      r.registrationCode?.toLowerCase() !== idStr.toLowerCase() &&
+      r.registrationId?.toLowerCase() !== idStr.toLowerCase()
+  );
   saveFileDb(db);
+  clearDbCache();
   return db.technexRegistrations.length < initialLen;
 }
 
