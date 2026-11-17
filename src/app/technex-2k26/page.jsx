@@ -298,6 +298,14 @@ export default function TechnexPage() {
           json.data?.registrationCode ||
           json.data?.id;
 
+        const regData = json.data || json;
+        if (typeof window !== "undefined") {
+          try {
+            sessionStorage.setItem(`technex_reg_${regId}`, JSON.stringify(regData));
+            sessionStorage.setItem("technex_latest_reg", JSON.stringify(regData));
+          } catch (e) {}
+        }
+
         setToast({ type: "success", message: "TECHNEX 2K26 Registration Successful! Redirecting..." });
         window.location.href = `/registration/success?id=${encodeURIComponent(regId)}`;
         return;

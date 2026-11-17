@@ -36,29 +36,77 @@ function SuccessContent() {
       return;
     }
 
-    const fetchUrl = `/api/technex/confirm?id=${encodeURIComponent(id)}`;
+    // 1. Check local session storage first for instant display
+    let initialCached = null;
+    if (typeof window !== "undefined") {
+      try {
+        const stored = sessionStorage.getItem(`technex_reg_${id}`) || sessionStorage.getItem("technex_latest_reg");
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          const parsedId = parsed.registrationCode || parsed.registrationId || parsed.id;
+          if (!id || parsedId === id || parsedId?.toLowerCase() === id?.toLowerCase()) {
+            initialCached = parsed;
+            setRegistration(parsed);
+            setLoading(false);
+          }
+        }
+      } catch (e) {}
+    }
 
-    fetch(fetchUrl)
-      .then(async (res) => {
-        const json = await res.json();
-        if (!res.ok) {
-          throw new Error(json.error || "Registration record not found.");
-        }
-        return json;
-      })
-      .then((json) => {
-        if (json.success && json.data) {
-          setRegistration(json.data);
-        } else {
-          setError(json.error || "Unable to retrieve registration details.");
-        }
-      })
-      .catch((err) => {
-        setError(err.message || "Failed to load registration details.");
-      })
-      .finally(() => {
-        setLoading(false);
-      });
+    // 2. Query confirmation API with automated retry to account for database replication
+    let attempts = 0;
+    const maxAttempts = 3;
+
+    const fetchConfirmation = () => {
+      attempts++;
+      const fetchUrl = `/api/technex/confirm?id=${encodeURIComponent(id)}`;
+
+      fetch(fetchUrl)
+        .then(async (res) => {
+          const json = await res.json();
+          if (!res.ok) {
+            // If 404 on initial attempt, retry after short delay
+            if (res.status === 404 && attempts < maxAttempts) {
+              setTimeout(fetchConfirmation, 1200);
+              return;
+            }
+            throw new Error(json.error || "Registration record not found.");
+          }
+          return json;
+        })
+        .then((json) => {
+          if (!json) return;
+          if (json.success && json.data) {
+            setRegistration(json.data);
+            setError("");
+            // Update session cache with authoritative server confirmation
+            if (typeof window !== "undefined") {
+              try {
+                sessionStorage.setItem(`technex_reg_${id}`, JSON.stringify(json.data));
+              } catch (e) {}
+            }
+          } else if (!initialCached) {
+            setError(json.error || "Unable to retrieve registration details.");
+          }
+        })
+        .catch((err) => {
+          // If we have local session cache, show it and don't block user
+          if (initialCached) {
+            setError("");
+          } else if (attempts >= maxAttempts) {
+            setError(err.message || "Failed to load registration details.");
+          } else {
+            setTimeout(fetchConfirmation, 1200);
+          }
+        })
+        .finally(() => {
+          if (attempts >= maxAttempts || initialCached) {
+            setLoading(false);
+          }
+        });
+    };
+
+    fetchConfirmation();
   }, [id]);
 
   const handleCopyCode = () => {

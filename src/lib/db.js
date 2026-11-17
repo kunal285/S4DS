@@ -1335,6 +1335,13 @@ export async function createTechnexRegistration(data) {
     throw new Error("Failed to save registration record in database. Please try again.");
   }
 
+  // Cache in memory for instant retrieval and zero-latency confirmation
+  setCached(`technexReg:${regCode}`, newReg);
+  setCached(`technexReg:${newReg.id}`, newReg);
+  if (newReg.registrationId) setCached(`technexReg:${newReg.registrationId}`, newReg);
+  if (newReg.__id) setCached(`technexReg:${newReg.__id}`, newReg);
+  clearDbCache("technexRegistrations");
+
   return newReg;
 }
 
@@ -1948,60 +1955,112 @@ export async function getTechnexRegistrationById(id) {
   if (!id) return null;
 
   const idStr = String(id).trim();
+
+  // 0. Check high-speed in-memory cache first
+  const memCached = getCached(`technexReg:${idStr}`);
+  if (memCached) {
+    return formatTechnexConfirmation(memCached);
+  }
+
   let reg = null;
 
+  // 1. Try RushDB lookup with multi-level resilient search
   try {
     if (await isRushDBConnected()) {
       const catalog = await getSchemaCatalog();
-      if (catalog.labels.has("TECHNEX_REGISTRATION")) {
-        // 1. Try finding by ID directly (handles both internal UUID and custom id)
-        reg = await findRecordById("TECHNEX_REGISTRATION", idStr);
+      if (catalog && catalog.labels && catalog.labels.has("TECHNEX_REGISTRATION")) {
+        // 1a. Try finding by ID directly
+        try {
+          reg = await findRecordById("TECHNEX_REGISTRATION", idStr);
+        } catch (e) {
+          // ignore error and proceed
+        }
 
-        // 2. If not found by ID, try finding by registrationCode (e.g., TNX-2026-001)
+        // 1b. Try finding by registrationCode in RushDB
         if (!reg) {
-          const byCode = await findRecords("TECHNEX_REGISTRATION", {
-            where: { registrationCode: idStr },
-            limit: 1,
-          });
-          if (byCode && byCode.length > 0) {
-            reg = byCode[0];
+          try {
+            const byCode = await findRecords("TECHNEX_REGISTRATION", {
+              where: { registrationCode: { $eq: idStr } },
+              limit: 1,
+            });
+            if (byCode && byCode.length > 0) {
+              reg = byCode[0];
+            }
+          } catch (e) {
+            // ignore error and proceed
           }
         }
 
-        // 3. Fallback scan across RushDB records for case-insensitive match
+        // 1c. Try finding by registrationId in RushDB
         if (!reg) {
-          const all = await findRecords("TECHNEX_REGISTRATION", { limit: 200 });
-          reg = all.find(
-            (r) =>
-              r.id === idStr ||
-              r.registrationCode === idStr ||
-              r.registrationId === idStr ||
-              r.__id === idStr ||
-              r.id?.toLowerCase() === idStr.toLowerCase() ||
-              r.registrationCode?.toLowerCase() === idStr.toLowerCase() ||
-              r.registrationId?.toLowerCase() === idStr.toLowerCase()
-          ) || null;
+          try {
+            const byRegId = await findRecords("TECHNEX_REGISTRATION", {
+              where: { registrationId: { $eq: idStr } },
+              limit: 1,
+            });
+            if (byRegId && byRegId.length > 0) {
+              reg = byRegId[0];
+            }
+          } catch (e) {
+            // ignore error and proceed
+          }
+        }
+
+        // 1d. Fallback scan across RushDB records for case-insensitive match
+        if (!reg) {
+          try {
+            const all = await findRecords("TECHNEX_REGISTRATION", { limit: 250 });
+            reg = all.find(
+              (r) =>
+                r.id === idStr ||
+                r.registrationCode === idStr ||
+                r.registrationId === idStr ||
+                r.__id === idStr ||
+                r.id?.toLowerCase() === idStr.toLowerCase() ||
+                r.registrationCode?.toLowerCase() === idStr.toLowerCase() ||
+                r.registrationId?.toLowerCase() === idStr.toLowerCase()
+            ) || null;
+          } catch (e) {
+            // ignore error and proceed
+          }
         }
       }
     }
   } catch (err) {
-    console.warn("RushDB getTechnexRegistrationById fallback:", err.message);
+    console.warn("RushDB getTechnexRegistrationById notice:", err.message);
   }
 
-  // Fallback to local persistent JSON file
+  // 2. Fallback to local persistent JSON file
   if (!reg) {
-    const db = getFileDb();
-    reg = (db.technexRegistrations || []).find(
-      (r) =>
-        r.id === idStr ||
-        r.registrationCode === idStr ||
-        r.registrationId === idStr ||
-        r.id?.toLowerCase() === idStr.toLowerCase() ||
-        r.registrationCode?.toLowerCase() === idStr.toLowerCase() ||
-        r.registrationId?.toLowerCase() === idStr.toLowerCase()
-    ) || null;
+    try {
+      const db = getFileDb();
+      reg = (db.technexRegistrations || []).find(
+        (r) =>
+          r.id === idStr ||
+          r.registrationCode === idStr ||
+          r.registrationId === idStr ||
+          r.__id === idStr ||
+          r.id?.toLowerCase() === idStr.toLowerCase() ||
+          r.registrationCode?.toLowerCase() === idStr.toLowerCase() ||
+          r.registrationId?.toLowerCase() === idStr.toLowerCase()
+      ) || null;
+    } catch (err) {
+      console.error("Local JSON read error:", err);
+    }
   }
 
+  if (!reg) return null;
+
+  // Cache in memory for subsequent immediate reads
+  setCached(`technexReg:${idStr}`, reg, 600000); // 10 minutes TTL
+  if (reg.registrationCode) setCached(`technexReg:${reg.registrationCode}`, reg, 600000);
+  if (reg.registrationId) setCached(`technexReg:${reg.registrationId}`, reg, 600000);
+  if (reg.id) setCached(`technexReg:${reg.id}`, reg, 600000);
+
+  return formatTechnexConfirmation(reg);
+}
+
+async function formatTechnexConfirmation(reg) {
   if (!reg) return null;
 
   // Fetch settings & technex config dynamically
@@ -2010,7 +2069,6 @@ export async function getTechnexRegistrationById(id) {
 
   const finalCode = reg.registrationCode || reg.registrationId || reg.id;
 
-  // Return clean, complete confirmation details without obsolete verification gates
   return {
     id: reg.id || reg.__id || finalCode,
     registrationId: finalCode,
