@@ -16,14 +16,14 @@ env:
   - variable: RUSHDB_MODE
     value: "fallback"
   - variable: NEXT_PUBLIC_FIREBASE_PROJECT_ID
-    value: "s4dsmitaoe"
+    value: "s4dsmitaoe-a4705"
   - variable: NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN
-    value: "s4dsmitaoe.firebaseapp.com"
+    value: "s4dsmitaoe-a4705.firebaseapp.com"
   - variable: NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET
-    value: "s4dsmitaoe.firebasestorage.app"
+    value: "s4dsmitaoe-a4705.firebasestorage.app"
   - variable: NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID
-    value: "23303549931"
+    value: "772432457597"
   - variable: NEXT_PUBLIC_FIREBASE_APP_ID
-    value: "1:23303549931:web:404eed6fd36baa5eb45fae"
+    value: "1:772432457597:web:496f8082961ddb77782614"
   - variable: NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID
-    value: "G-P10PLZDH5Y"
+    value: "G-7EBQSZBJ21"

@@ -1,8 +1,5 @@
 {
   "projects": {
-    "default": "s4dsmitaoe",
-    "staging": "s4dsmitaoe"
-  },
-  "targets": {},
-  "etags": {}
+    "default": "s4dsmitaoe-a4705"
+  }
 }

@@ -1,15 +1,15 @@
 import { initializeApp, getApps, getApp } from "firebase/app";
 import { getAnalytics, isSupported } from "firebase/analytics";
 
-// Your web app's Firebase configuration for s4dsmitaoe
+// Your web app's Firebase configuration for s4dsmitaoe-a4705
 export const firebaseConfig = {
-  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY || "AIzaSyAGkAEvIHVPyEAzOKmgDwOzCwVc8q8iR6Y",
-  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || "s4dsmitaoe.firebaseapp.com",
-  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || "s4dsmitaoe",
-  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || "s4dsmitaoe.firebasestorage.app",
-  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || "23303549931",
-  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID || "1:23303549931:web:404eed6fd36baa5eb45fae",
-  measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID || "G-P10PLZDH5Y"
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY || "AIzaSyBks9NzSFqWJAfKok8btZSJa-zGpY7MqdM",
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || "s4dsmitaoe-a4705.firebaseapp.com",
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || "s4dsmitaoe-a4705",
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || "s4dsmitaoe-a4705.firebasestorage.app",
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || "772432457597",
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID || "1:772432457597:web:496f8082961ddb77782614",
+  measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID || "G-7EBQSZBJ21"
 };
 
 // Initialize Firebase App safely (singleton pattern across SSR & client)
