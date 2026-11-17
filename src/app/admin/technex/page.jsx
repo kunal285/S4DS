@@ -579,7 +579,7 @@ export default function AdminTechnexPage() {
                   type="text"
                   value={form.activePaymentQrUrl}
                   onChange={(e) => setForm({ ...form, activePaymentQrUrl: e.target.value })}
-                  placeholder="https://...supabase.co/.../payment-qr.png"
+                  placeholder="https://res.cloudinary.com/.../payment-qr.png"
                   className="w-full px-4 py-2.5 rounded-xl bg-background-elevated border border-brand-border text-xs text-white focus:outline-none focus:border-brand-orange font-mono"
                 />
               </div>
@@ -639,12 +639,12 @@ export default function AdminTechnexPage() {
               </div>
 
               <div className="space-y-1.5 pt-2">
-                <label className="text-xs font-semibold text-brand-secondary">Event Poster URL (Supabase Storage)</label>
+                <label className="text-xs font-semibold text-brand-secondary">Event Poster URL (Cloudinary Storage)</label>
                 <input
                   type="text"
                   value={form.posterUrl}
                   onChange={(e) => setForm({ ...form, posterUrl: e.target.value })}
-                  placeholder="https://...supabase.co/.../poster.png"
+                  placeholder="https://res.cloudinary.com/.../poster.png"
                   className="w-full px-4 py-2.5 rounded-xl bg-background-elevated border border-brand-border text-xs text-white focus:outline-none focus:border-brand-orange font-mono"
                 />
               </div>

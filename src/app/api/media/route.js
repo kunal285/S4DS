@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getMediaItems, createMediaItem } from "@/lib/db";
 import { validateAdminRequest } from "@/lib/auth";
-import { getSignedUrl } from "@/lib/supabase";
+import { getSignedUrl } from "@/lib/cloudinary";
 
 export async function GET(request) {
   try {

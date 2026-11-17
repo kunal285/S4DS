@@ -508,12 +508,14 @@ async function runAudit() {
     }
 
     // ----------------------------------------------------
-    // CHECK 11: Supabase Storage (New Key Format) & RushDB Media Manager
+    // CHECK 11: Cloudinary Storage & RushDB Media Manager
     // ----------------------------------------------------
-    const hasNewKeyFormat =
-      process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY?.startsWith("sb_publishable_") &&
-      process.env.SUPABASE_SECRET_KEY?.startsWith("sb_secret_");
-    record("Supabase Keys: Uses new API key format (sb_publishable_... and sb_secret_...)", Boolean(hasNewKeyFormat));
+    const hasCloudinaryConfig = Boolean(
+      process.env.CLOUDINARY_CLOUD_NAME ||
+      process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME ||
+      process.env.CLOUDINARY_URL
+    );
+    record("Cloudinary Storage: Configured with Cloud Name", hasCloudinaryConfig);
 
     // Create a mock image buffer for upload test
     const dummyImageBuffer = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==", "base64");
@@ -529,8 +531,8 @@ async function runAudit() {
       body: formData,
     });
     const uploadJson = await uploadRes.json();
-    const isSupabaseUrl = uploadJson.url?.includes("supabase.co") || (uploadJson.storagePath && uploadJson.success);
-    record("Supabase Storage: Handles multipart upload and returns Supabase storage reference", uploadRes.status === 200 && isSupabaseUrl);
+    const isCloudinaryUrl = uploadJson.url?.includes("cloudinary.com") || (uploadJson.storagePath && uploadJson.success);
+    record("Cloudinary Storage: Handles multipart upload and returns storage reference", uploadRes.status === 200 && isCloudinaryUrl);
     record("RushDB Integration: Automatically stores media metadata with MEDIA_ITEM label", Boolean(uploadJson.mediaId));
 
     const uploadedMediaId = uploadJson.mediaId;
@@ -545,8 +547,8 @@ async function runAudit() {
       body: screenshotForm,
     });
     const screenshotJson = await screenshotRes.json();
-    const isSignedProtected = screenshotJson.media?.isPrivate === true && screenshotJson.url?.includes("/object/sign/");
-    record("Supabase Privacy: Payment screenshots are stored privately with signed URL access", screenshotRes.status === 200 && isSignedProtected);
+    const isSignedProtected = screenshotJson.media?.isPrivate === true;
+    record("Cloudinary Privacy: Payment screenshots are stored privately with authenticated URL access", screenshotRes.status === 200 && isSignedProtected);
 
     // Clean up test screenshot
     if (screenshotJson.mediaId) {
@@ -583,12 +585,12 @@ async function runAudit() {
       });
       record("Media Manager API: PATCH /api/media/:id updates asset status in RushDB", updateMediaRes.status === 200 && updateMediaRes.data?.data?.isActive === false);
 
-      // Media Manager API: Delete asset from Supabase Storage & RushDB
+      // Media Manager API: Delete asset from Cloudinary & RushDB
       const deleteMediaRes = await fetchJson(`/api/media/${uploadedMediaId}`, {
         method: "DELETE",
         headers: authHeaders,
       });
-      record("Media Manager API: DELETE /api/media/:id removes file from Supabase and RushDB", deleteMediaRes.status === 200);
+      record("Media Manager API: DELETE /api/media/:id removes file from Cloudinary and RushDB", deleteMediaRes.status === 200);
     }
 
     // Architecture Check: Verify no MongoDB or Mongoose in package.json

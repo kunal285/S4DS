@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import path from "path";
-import { uploadToSupabase, CATEGORY_FOLDERS } from "@/lib/supabase";
+import { uploadToCloudinary, CATEGORY_FOLDERS } from "@/lib/cloudinary";
 import { createMediaItem } from "@/lib/db";
 
 // Allowed file types
@@ -44,9 +44,9 @@ export async function POST(request) {
     const arrayBuffer = await file.arrayBuffer();
     const fileBuffer = Buffer.from(arrayBuffer);
 
-    // 1. Upload file to Supabase Storage
+    // 1. Upload file to Cloudinary Storage
     const isPrivate = category === "payment-screenshot" || category === "document";
-    const uploadResult = await uploadToSupabase({
+    const uploadResult = await uploadToCloudinary({
       fileBuffer,
       fileName: file.name,
       mimeType: file.type,
@@ -71,7 +71,7 @@ export async function POST(request) {
 
     return NextResponse.json({
       success: true,
-      message: "File uploaded to Supabase Storage and registered in RushDB successfully.",
+      message: "File uploaded to Cloudinary and registered in RushDB successfully.",
       url: uploadResult.fileUrl,
       fileUrl: uploadResult.fileUrl,
       storagePath: uploadResult.storagePath,
@@ -83,9 +83,9 @@ export async function POST(request) {
       category,
     });
   } catch (err) {
-    console.error("Supabase Storage upload error:", err);
+    console.error("Cloudinary upload error:", err);
     return NextResponse.json(
-      { error: err.message || "Failed to upload file to Supabase Storage." },
+      { error: err.message || "Failed to upload file to Cloudinary." },
       { status: 500 }
     );
   }

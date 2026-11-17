@@ -52,8 +52,8 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en" className="dark scroll-smooth">
       <head>
-        <link rel="preconnect" href="https://cflqsjjkekfrnjjbhuja.supabase.co" crossOrigin="anonymous" />
-        <link rel="dns-prefetch" href="https://cflqsjjkekfrnjjbhuja.supabase.co" />
+        <link rel="preconnect" href="https://res.cloudinary.com" crossOrigin="anonymous" />
+        <link rel="dns-prefetch" href="https://res.cloudinary.com" />
       </head>
       <body className="min-h-screen flex flex-col bg-background-main text-brand-white antialiased selection:bg-brand-orange selection:text-white">
         <Navbar />

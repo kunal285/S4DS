@@ -7,7 +7,7 @@ import {
   createMediaItem,
 } from "@/lib/db";
 import { validateAdminRequest } from "@/lib/auth";
-import { uploadToSupabase, getSignedUrl } from "@/lib/supabase";
+import { uploadToCloudinary, getSignedUrl } from "@/lib/cloudinary";
 
 export async function GET(request) {
   try {
@@ -225,7 +225,7 @@ export async function POST(request) {
       screenshotUploadedAt = new Date().toISOString();
 
       const buffer = Buffer.from(await screenshotFile.arrayBuffer());
-      const uploadResult = await uploadToSupabase({
+      const uploadResult = await uploadToCloudinary({
         fileBuffer: buffer,
         fileName: screenshotFileName,
         mimeType: screenshotMimeType,

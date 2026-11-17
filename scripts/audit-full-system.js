@@ -41,10 +41,10 @@ async function runAudit() {
   const allDeps = { ...pkg.dependencies, ...pkg.devDependencies };
   assert(!allDeps.mongodb, "MongoDB is not present");
   assert(!allDeps.mongoose, "Mongoose is not present");
-  assert(!allDeps.cloudinary, "Cloudinary is not present");
+  assert(Boolean(allDeps.cloudinary), "Cloudinary is installed");
+  assert(!allDeps["@supabase/supabase-js"], "Supabase is not present");
   assert(!allDeps["aws-sdk"] && !allDeps["@aws-sdk/client-s3"], "AWS S3 SDK is not present");
   assert(Boolean(allDeps["@rushdb/javascript-sdk"]), "RushDB SDK is installed");
-  assert(Boolean(allDeps["@supabase/supabase-js"]), "Supabase JS is installed");
 
   // 2. RushDB Connectivity & Labels
   console.log("\n[2/10] Testing RushDB Connection & Schema Catalog...");
@@ -108,23 +108,12 @@ async function runAudit() {
   assert(fee2 === 99, `Calculated fee for 'Non-S4DS Member' is ₹${fee2}`);
   assert(feeInvalid === null, "Invalid tier calculation correctly rejected");
 
-  // 7. Supabase Storage Configuration
-  console.log("\n[7/10] Verifying Supabase Storage Client...");
-  const { getSupabaseServerClient, BUCKET_NAME } = require("../src/lib/supabase");
-  const supabase = getSupabaseServerClient();
-  assert(Boolean(supabase), "Supabase Server client initialized");
-  assert(BUCKET_NAME === "s4ds-media", `Supabase Bucket name: '${BUCKET_NAME}'`);
-  try {
-    const { data: buckets, error } = await supabase.storage.listBuckets();
-    if (error) {
-      console.warn("  ⚠ Note on Supabase buckets list:", error.message);
-    } else {
-      const found = buckets?.some((b) => b.name === BUCKET_NAME);
-      assert(found, `Bucket '${BUCKET_NAME}' verified in Supabase project`);
-    }
-  } catch (e) {
-    console.warn("  ⚠ Supabase listBuckets error:", e.message);
-  }
+  // 7. Cloudinary Storage Configuration
+  console.log("\n[7/10] Verifying Cloudinary Storage Client...");
+  const cloudinaryModule = require("../src/lib/cloudinary");
+  assert(Boolean(cloudinaryModule.uploadToCloudinary), "uploadToCloudinary is exported");
+  assert(Boolean(cloudinaryModule.deleteFromCloudinary), "deleteFromCloudinary is exported");
+  assert(Boolean(cloudinaryModule.getSignedUrl), "getSignedUrl is exported");
 
   // 8. Projects Data in RushDB
   console.log("\n[8/10] Verifying Projects in RushDB...");

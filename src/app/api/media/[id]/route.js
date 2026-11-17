@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getMediaItemById, updateMediaItem, deleteMediaItem } from "@/lib/db";
 import { validateAdminRequest } from "@/lib/auth";
-import { deleteFromSupabase, getSignedUrl } from "@/lib/supabase";
+import { deleteFromCloudinary, getSignedUrl } from "@/lib/cloudinary";
 
 export async function GET(request, { params }) {
   try {
@@ -67,12 +67,12 @@ export async function DELETE(request, { params }) {
       return NextResponse.json({ error: "Media item not found" }, { status: 404 });
     }
 
-    // 1. Delete from Supabase Storage
+    // 1. Delete from Cloudinary
     if (existing.storagePath) {
       try {
-        await deleteFromSupabase(existing.storagePath);
+        await deleteFromCloudinary(existing.storagePath);
       } catch (storageErr) {
-        console.warn("Notice deleting from Supabase storage:", storageErr.message);
+        console.warn("Notice deleting from Cloudinary:", storageErr.message);
       }
     }
 
@@ -81,7 +81,7 @@ export async function DELETE(request, { params }) {
 
     return NextResponse.json({
       success: true,
-      message: "Media deleted from Supabase Storage and RushDB successfully",
+      message: "Media deleted from Cloudinary and RushDB successfully",
     });
   } catch (err) {
     console.error("DELETE /api/media/[id] error:", err);
