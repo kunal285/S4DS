@@ -10,6 +10,7 @@
 /build
 /dist
 .firebase/
+AGENTS.md
 
 # Production and Local Environment Variables
 .env

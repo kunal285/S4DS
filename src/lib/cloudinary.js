@@ -1,9 +1,13 @@
 import { v2 as cloudinary } from "cloudinary";
 
 // Configure Cloudinary from environment variables
-const cloudName = process.env.CLOUDINARY_CLOUD_NAME || process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || "s4ds-mitaoe";
-const apiKey = process.env.CLOUDINARY_API_KEY || "";
-const apiSecret = process.env.CLOUDINARY_API_SECRET || "";
+let cloudName = (process.env.CLOUDINARY_CLOUD_NAME || process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || "dmy7cmuq9").trim();
+if (cloudName.toLowerCase().startsWith("s4ds") || cloudName.includes(" ")) {
+  const nextPublic = (process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || "").trim();
+  cloudName = nextPublic && !nextPublic.toLowerCase().startsWith("s4ds") && !nextPublic.includes(" ") ? nextPublic : "dmy7cmuq9";
+}
+const apiKey = (process.env.CLOUDINARY_API_KEY || "").trim();
+const apiSecret = (process.env.CLOUDINARY_API_SECRET || "").trim();
 
 cloudinary.config({
   cloud_name: cloudName,
@@ -51,7 +55,7 @@ export async function uploadToCloudinary({
     .replace(/[^a-zA-Z0-9_-]/g, "_");
   const uniquePublicId = `${folder}/${Date.now()}_${sanitizedBaseName}`;
   const isPdf = mimeType === "application/pdf" || (fileName && fileName.endsWith(".pdf"));
-  const resourceType = isPdf ? "raw" : "image";
+  const resourceType = isPdf ? "raw" : "auto";
   const isSensitive = isPrivate || category === "payment-screenshot" || category === "document";
 
   return new Promise((resolve, reject) => {

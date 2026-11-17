@@ -65,8 +65,8 @@ export default function Navbar() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-20">
           {/* Logo / Chapter Identity */}
-          <Link href="/" className="flex items-center gap-3.5 group">
-            <div className="relative w-11 h-11 rounded-xl overflow-hidden shadow-md shadow-brand-red/20 group-hover:scale-105 transition-transform duration-200 bg-background-elevated border border-brand-border p-1 flex items-center justify-center">
+          <Link href="/" className="flex items-center gap-3.5 group" suppressHydrationWarning>
+            <div className="relative w-11 h-11 rounded-xl overflow-hidden shadow-md shadow-brand-red/20 group-hover:scale-105 transition-transform duration-200 bg-background-elevated border border-brand-border p-1 flex items-center justify-center" suppressHydrationWarning>
               <Image
                 src={settings?.logoUrl || "/images/logo.png"}
                 alt={`${settings?.websiteName || "S4DS MITAOE"} Official Logo`}
@@ -74,16 +74,17 @@ export default function Navbar() {
                 height={36}
                 className="object-contain"
                 priority
+                suppressHydrationWarning
               />
             </div>
-            <div className="flex flex-col">
-              <span className="font-black text-lg tracking-tight text-brand-white flex items-center gap-1.5">
+            <div className="flex flex-col" suppressHydrationWarning>
+              <span className="font-black text-lg tracking-tight text-brand-white flex items-center gap-1.5" suppressHydrationWarning>
                 {settings?.websiteName ? settings.websiteName.split(" ")[0] : "S4DS"}{" "}
-                <span className="text-brand-orange font-bold text-sm tracking-normal">
+                <span className="text-brand-orange font-bold text-sm tracking-normal" suppressHydrationWarning>
                   {settings?.websiteName ? settings.websiteName.split(" ").slice(1).join(" ") : "MITAOE"}
                 </span>
               </span>
-              <span className="text-[10px] text-brand-muted tracking-widest uppercase font-semibold">
+              <span className="text-[10px] text-brand-muted tracking-widest uppercase font-semibold" suppressHydrationWarning>
                 {settings?.websiteTagline || "Society for Data Science"}
               </span>
             </div>

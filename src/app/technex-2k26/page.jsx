@@ -196,67 +196,88 @@ export default function TechnexPage() {
     setPreviewUrl("");
   };
 
+  const showError = (message, elementId = null) => {
+    setErrorMessage(message);
+    setToast({ type: "error", message });
+    if (typeof window !== "undefined") {
+      setTimeout(() => {
+        if (elementId) {
+          const el = document.getElementById(elementId);
+          if (el) {
+            el.scrollIntoView({ behavior: "smooth", block: "center" });
+            el.focus?.();
+            return;
+          }
+        }
+        const banner = document.getElementById("form-error-banner-bottom") || document.getElementById("form-error-banner-top");
+        if (banner) {
+          banner.scrollIntoView({ behavior: "smooth", block: "center" });
+        }
+      }, 50);
+    }
+  };
+
   const handleSubmit = async (e) => {
-    e.preventDefault();
+    if (e?.preventDefault) e.preventDefault();
     setErrorMessage("");
 
     if (config?.registrationOpen === false) {
-      setErrorMessage("Registrations for TECHNEX 2K26 are currently closed.");
+      showError("Registrations for TECHNEX 2K26 are currently closed.");
       return;
     }
 
     if (!formData.membershipType) {
-      setErrorMessage("Please select a membership category.");
+      showError("Please select a membership category.", "field-membership-type");
       return;
     }
 
     if (!formData.teamName.trim()) {
-      setErrorMessage("Team name is required.");
+      showError("Team name is required.", "field-team-name");
       return;
     }
     if (!formData.projectTitle.trim()) {
-      setErrorMessage("Project title is required.");
+      showError("Project title is required.", "field-project-title");
       return;
     }
     if (!formData.domain) {
-      setErrorMessage("Please select a domain track.");
+      showError("Please select a domain track.", "field-domain");
       return;
     }
     if (!formData.leaderName.trim()) {
-      setErrorMessage("Team leader name is required.");
+      showError("Team leader name is required.", "field-leader-name");
       return;
     }
     if (!formData.leaderEmail.trim()) {
-      setErrorMessage("Team leader email is required.");
+      showError("Team leader email is required.", "field-leader-email");
       return;
     }
     if (!formData.leaderPhone.trim() || formData.leaderPhone.replace(/\D/g, "").length < 10) {
-      setErrorMessage("Valid 10-digit leader phone number is required.");
+      showError("Valid 10-digit leader phone number is required.", "field-leader-phone");
       return;
     }
     if (!formData.leaderCollege.trim()) {
-      setErrorMessage("Leader college name is required.");
+      showError("Leader college name is required.", "field-leader-college");
       return;
     }
     if (!formData.leaderPrn.trim()) {
-      setErrorMessage("Leader PRN / Roll Number is required.");
+      showError("Leader PRN / Roll Number is required.", "field-leader-prn");
       return;
     }
 
     if (!formData.utr.trim() || formData.utr.trim().length < 4) {
-      setErrorMessage("Please enter a valid UPI Transaction ID / UTR reference number.");
+      showError("Please enter a valid UPI Transaction ID / UTR reference number.", "field-utr");
       return;
     }
 
     if (!screenshotFile) {
-      setErrorMessage("Please upload your payment screenshot before submitting.");
+      showError("Please upload your payment screenshot before submitting.", "field-screenshot");
       return;
     }
 
     for (let i = 0; i < formData.teamMembers.length; i++) {
       const m = formData.teamMembers[i];
       if (!m.name.trim() || !m.email.trim()) {
-        setErrorMessage(`Please provide name and email for Member #${i + 2}.`);
+        showError(`Please provide name and email for Member #${i + 2}.`, `field-member-${i}`);
         return;
       }
     }
@@ -310,10 +331,10 @@ export default function TechnexPage() {
         window.location.href = `/registration/success?id=${encodeURIComponent(regId)}`;
         return;
       } else {
-        setErrorMessage(json.error || "Failed to submit registration. Please verify details.");
+        showError(json.error || "Failed to submit registration. Please verify details.");
       }
     } catch (err) {
-      setErrorMessage("Network error during submission. Please try again.");
+      showError("Network error during submission. Please try again.");
     } finally {
       setSubmitting(false);
     }
@@ -431,6 +452,7 @@ export default function TechnexPage() {
           </div>
         ) : (
           <form
+            noValidate
             onSubmit={handleSubmit}
             className="p-8 sm:p-12 rounded-3xl bg-background-card border border-brand-border space-y-8 shadow-xl"
           >
@@ -444,14 +466,14 @@ export default function TechnexPage() {
             </div>
 
             {errorMessage && (
-              <div className="p-4 rounded-xl bg-[#2d1210]/95 border border-rose-500/50 text-rose-200 text-sm flex items-start gap-3">
+              <div id="form-error-banner-top" className="p-4 rounded-xl bg-[#2d1210]/95 border border-rose-500/50 text-rose-200 text-sm flex items-start gap-3">
                 <AlertCircle className="w-5 h-5 text-rose-400 shrink-0 mt-0.5" />
                 <span>{errorMessage}</span>
               </div>
             )}
 
             {/* ── SECTION 1: Membership Category Selection (Mandatory & Dynamic) ── */}
-            <div className="space-y-4">
+            <div id="field-membership-type" className="space-y-4">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                 <h3 className="text-base font-bold text-brand-orange uppercase tracking-wider flex items-center gap-2">
                   <Sparkles className="w-4 h-4 text-brand-yellow" /> 1. Membership Category *
@@ -515,6 +537,7 @@ export default function TechnexPage() {
                     Team Name *
                   </label>
                   <input
+                    id="field-team-name"
                     type="text"
                     required
                     placeholder="e.g. Neural Pioneers"
@@ -529,6 +552,7 @@ export default function TechnexPage() {
                     Project Title *
                   </label>
                   <input
+                    id="field-project-title"
                     type="text"
                     required
                     placeholder="e.g. Autonomous Edge-AI Navigation System"
@@ -544,6 +568,7 @@ export default function TechnexPage() {
                   Domain / Competition Track *
                 </label>
                 <select
+                  id="field-domain"
                   value={formData.domain}
                   onChange={(e) => setFormData({ ...formData, domain: e.target.value })}
                   className="w-full px-4 py-2.5 rounded-xl bg-background-elevated border border-brand-border text-brand-white text-sm focus:outline-none focus:border-brand-orange"
@@ -595,6 +620,7 @@ export default function TechnexPage() {
                     Leader Full Name *
                   </label>
                   <input
+                    id="field-leader-name"
                     type="text"
                     required
                     placeholder="e.g. Harsh Holkar"
@@ -609,6 +635,7 @@ export default function TechnexPage() {
                     Leader Email Address *
                   </label>
                   <input
+                    id="field-leader-email"
                     type="email"
                     required
                     placeholder="e.g. leader@mitaoe.ac.in"
@@ -623,6 +650,7 @@ export default function TechnexPage() {
                     Leader WhatsApp Phone Number *
                   </label>
                   <input
+                    id="field-leader-phone"
                     type="tel"
                     required
                     placeholder="e.g. 9876543210"
@@ -637,6 +665,7 @@ export default function TechnexPage() {
                     College / Institute Name *
                   </label>
                   <input
+                    id="field-leader-college"
                     type="text"
                     required
                     placeholder="e.g. MIT Academy of Engineering, Pune"
@@ -651,6 +680,7 @@ export default function TechnexPage() {
                     Leader PRN / Student Roll Number *
                   </label>
                   <input
+                    id="field-leader-prn"
                     type="text"
                     required
                     placeholder="e.g. 2022BTECS001"
@@ -913,6 +943,7 @@ export default function TechnexPage() {
                   <span className="text-[10px] text-brand-muted normal-case font-normal">Found in your payment app receipt</span>
                 </label>
                 <input
+                  id="field-utr"
                   type="text"
                   required
                   placeholder="e.g. 431289567123 or UPI Ref No."
@@ -923,7 +954,7 @@ export default function TechnexPage() {
               </div>
 
               {/* Input Field B: Payment Screenshot Upload */}
-              <div className="space-y-2">
+              <div id="field-screenshot" className="space-y-2">
                 <label className="text-xs font-bold uppercase tracking-wider text-[#FFF1DF] flex items-center justify-between">
                   <span>B. Payment Screenshot Proof *</span>
                   <span className="text-[10px] text-brand-muted normal-case font-normal">PNG, JPG, JPEG or WebP (Max 5MB)</span>
@@ -1029,10 +1060,21 @@ export default function TechnexPage() {
               </div>
             </div>
 
+            {errorMessage && (
+              <div id="form-error-banner-bottom" className="p-4 rounded-xl bg-[#2d1210]/95 border border-rose-500/50 text-rose-200 text-sm flex items-start gap-3">
+                <AlertCircle className="w-5 h-5 text-rose-400 shrink-0 mt-0.5" />
+                <div className="flex-1">
+                  <span className="font-bold text-rose-300 block mb-0.5">Please check before submitting:</span>
+                  <span>{errorMessage}</span>
+                </div>
+              </div>
+            )}
+
             <button
               type="submit"
+              onClick={handleSubmit}
               disabled={submitting}
-              className="w-full py-4 rounded-xl brand-btn text-white font-extrabold text-base transition-transform hover:scale-[1.01] shadow-xl shadow-brand-red/30 flex items-center justify-center gap-2 disabled:opacity-50"
+              className="w-full py-4 rounded-xl brand-btn text-white font-extrabold text-base transition-transform hover:scale-[1.01] shadow-xl shadow-brand-red/30 flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
             >
               {submitting ? "Submitting Registration..." : "SUBMIT REGISTRATION"}
             </button>

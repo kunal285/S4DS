@@ -225,34 +225,42 @@ export async function POST(request) {
       screenshotUploadedAt = new Date().toISOString();
 
       const buffer = Buffer.from(await screenshotFile.arrayBuffer());
-      const uploadResult = await uploadToCloudinary({
-        fileBuffer: buffer,
-        fileName: screenshotFileName,
-        mimeType: screenshotMimeType,
-        category: "payment-screenshot",
-        isPrivate: true,
-      });
-      paymentScreenshotUrl = uploadResult.fileUrl;
-      paymentScreenshotPath = uploadResult.storagePath;
-
-      // Link screenshot reference as MEDIA_ITEM in RushDB
       try {
-        const mediaRecord = await createMediaItem({
-          title: `Payment Proof - ${teamName.trim()}`,
-          category: "payment-screenshot",
+        const uploadResult = await uploadToCloudinary({
+          fileBuffer: buffer,
           fileName: screenshotFileName,
-          storagePath: uploadResult.storagePath,
-          fileUrl: uploadResult.fileUrl,
-          fileSize: screenshotFileSize,
           mimeType: screenshotMimeType,
+          category: "payment-screenshot",
           isPrivate: true,
-          isActive: true,
         });
-        if (mediaRecord?.id) {
-          data.paymentScreenshotMediaId = mediaRecord.id;
+        paymentScreenshotUrl = uploadResult.fileUrl;
+        paymentScreenshotPath = uploadResult.storagePath;
+
+        // Link screenshot reference as MEDIA_ITEM in RushDB
+        try {
+          const mediaRecord = await createMediaItem({
+            title: `Payment Proof - ${teamName.trim()}`,
+            category: "payment-screenshot",
+            fileName: screenshotFileName,
+            storagePath: uploadResult.storagePath,
+            fileUrl: uploadResult.fileUrl,
+            fileSize: screenshotFileSize,
+            mimeType: screenshotMimeType,
+            isPrivate: true,
+            isActive: true,
+          });
+          if (mediaRecord?.id) {
+            data.paymentScreenshotMediaId = mediaRecord.id;
+          }
+        } catch (e) {
+          console.warn("Notice: payment screenshot media reference record:", e.message);
         }
-      } catch (e) {
-        console.warn("Notice: payment screenshot media reference record:", e.message);
+      } catch (uploadErr) {
+        console.warn("Warning: Cloudinary upload failed, using secure data URI fallback:", uploadErr.message);
+        // Base64 fallback ensures student registration is NEVER lost or aborted due to third-party storage issues
+        const base64Data = buffer.toString("base64");
+        paymentScreenshotUrl = `data:${screenshotMimeType};base64,${base64Data}`;
+        paymentScreenshotPath = `fallback/${Date.now()}_${screenshotFileName}`;
       }
     }
 
