@@ -19,6 +19,7 @@ export async function POST(request) {
     const formData = await request.formData();
     const file = formData.get("file");
     const category = formData.get("category") || "event-poster";
+    const subfolder = formData.get("subfolder") || null;
     const title = formData.get("title") || "";
     const associatedRecordId = formData.get("associatedRecordId") || null;
     const isActive = formData.get("isActive") === "true";
@@ -44,15 +45,15 @@ export async function POST(request) {
     const arrayBuffer = await file.arrayBuffer();
     const fileBuffer = Buffer.from(arrayBuffer);
 
-    // 1. Upload file to Cloudinary Storage inside the S4DS folder
+    // 1. Upload file to Cloudinary Storage inside the S4DS subfolder
     const isPrivate = category === "payment-screenshot" || category === "document";
     const uploadResult = await uploadToCloudinary({
       fileBuffer,
       fileName: file.name,
       mimeType: file.type,
       category,
+      subfolder,
       isPrivate,
-      folder: "S4DS",
     });
 
     // 2. Save metadata and reference in RushDB (MEDIA_ITEM label)
@@ -60,7 +61,7 @@ export async function POST(request) {
       title: title || file.name,
       fileName: file.name,
       category,
-      folder: "S4DS",
+      folder: uploadResult.folder,
       storagePath: uploadResult.public_id || uploadResult.storagePath,
       publicId: uploadResult.public_id || uploadResult.storagePath,
       fileUrl: uploadResult.secure_url || uploadResult.fileUrl,
@@ -74,13 +75,13 @@ export async function POST(request) {
 
     return NextResponse.json({
       success: true,
-      message: "File uploaded to Cloudinary S4DS folder and registered in RushDB successfully.",
+      message: `File uploaded to Cloudinary folder '${uploadResult.folder}' and registered in RushDB successfully.`,
       url: uploadResult.secure_url || uploadResult.fileUrl,
       fileUrl: uploadResult.secure_url || uploadResult.fileUrl,
       secureUrl: uploadResult.secure_url || uploadResult.fileUrl,
       publicId: uploadResult.public_id,
       storagePath: uploadResult.public_id || uploadResult.storagePath,
-      folder: "S4DS",
+      folder: uploadResult.folder,
       mediaId: mediaRecord.id,
       media: mediaRecord,
       fileName: file.name,

@@ -16,18 +16,19 @@ cloudinary.config({
   secure: true,
 });
 
+export const ROOT_FOLDER = "S4DS";
 export const TARGET_FOLDER = "S4DS";
 
 export const CATEGORY_FOLDERS = {
-  "payment-qr": "S4DS",
-  "payment-screenshot": "S4DS",
-  "event-poster": "S4DS",
-  "event-gallery": "S4DS",
-  "team-profile": "S4DS",
-  "project-image": "S4DS",
-  "website-banner": "S4DS",
-  "logo": "S4DS",
-  "document": "S4DS",
+  "payment-qr": `${ROOT_FOLDER}/payment-qr`,
+  "payment-screenshot": `${ROOT_FOLDER}/payment-screenshots`,
+  "event-poster": `${ROOT_FOLDER}/events`,
+  "event-gallery": `${ROOT_FOLDER}/gallery`,
+  "team-profile": `${ROOT_FOLDER}/team`,
+  "project-image": `${ROOT_FOLDER}/projects`,
+  "website-banner": `${ROOT_FOLDER}/banners`,
+  "logo": `${ROOT_FOLDER}/logos`,
+  "document": `${ROOT_FOLDER}/documents`,
 };
 
 export const CATEGORY_LABELS = {
@@ -43,17 +44,35 @@ export const CATEGORY_LABELS = {
 };
 
 /**
- * Uploads a file buffer to Cloudinary directly inside the existing 'S4DS' folder.
+ * Resolves the structured subfolder inside the S4DS root folder.
+ */
+export function resolveSubfolder(category = "general", customSubfolder = null) {
+  if (customSubfolder) {
+    const cleanSub = customSubfolder.replace(/^\/+|\/+$/g, "");
+    return cleanSub.startsWith(ROOT_FOLDER) ? cleanSub : `${ROOT_FOLDER}/${cleanSub}`;
+  }
+  if (CATEGORY_FOLDERS[category]) {
+    return CATEGORY_FOLDERS[category];
+  }
+  const cleanCat = (category || "general").replace(/[^a-zA-Z0-9_-]/g, "_").toLowerCase();
+  return `${ROOT_FOLDER}/${cleanCat || "general"}`;
+}
+
+/**
+ * Uploads a file buffer to Cloudinary inside the designated subfolder of 'S4DS'.
  */
 export async function uploadToCloudinary({
   fileBuffer,
   fileName,
   mimeType = "image/png",
   category = "event-poster",
+  subfolder = null,
+  folder = null,
   isPrivate = false,
-  folder = TARGET_FOLDER,
 }) {
-  const targetFolder = folder || TARGET_FOLDER;
+  const targetFolder = folder
+    ? (folder.startsWith(ROOT_FOLDER) ? folder : `${ROOT_FOLDER}/${folder.replace(/^\/+/, "")}`)
+    : resolveSubfolder(category, subfolder);
   const sanitizedBaseName = (fileName ? fileName.replace(/\.[^/.]+$/, "") : "media")
     .replace(/[^a-zA-Z0-9_-]/g, "_")
     .substring(0, 50);

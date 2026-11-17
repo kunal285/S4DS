@@ -231,7 +231,6 @@ export async function POST(request) {
           fileName: screenshotFileName,
           mimeType: screenshotMimeType,
           category: "payment-screenshot",
-          folder: "S4DS",
           isPrivate: false,
         });
         paymentScreenshotUrl = uploadResult.secure_url || uploadResult.fileUrl;
@@ -242,7 +241,7 @@ export async function POST(request) {
           const mediaRecord = await createMediaItem({
             title: `Payment Proof - ${teamName.trim()}`,
             category: "payment-screenshot",
-            folder: "S4DS",
+            folder: uploadResult.folder,
             fileName: screenshotFileName,
             storagePath: uploadResult.public_id || uploadResult.storagePath,
             publicId: uploadResult.public_id || uploadResult.storagePath,

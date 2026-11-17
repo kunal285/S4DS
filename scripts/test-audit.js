@@ -552,9 +552,13 @@ async function runAudit() {
       body: formData,
     });
     const uploadJson = await uploadRes.json();
+    if (uploadRes.status !== 200) {
+      console.log("Upload failed debug:", uploadRes.status, uploadJson);
+    }
     const isCloudinaryUrl = uploadJson.url?.includes("cloudinary.com") || (uploadJson.storagePath && uploadJson.success);
     record("Cloudinary Storage: Handles multipart upload and returns storage reference", uploadRes.status === 200 && isCloudinaryUrl);
     record("Cloudinary Target Folder: Asset stored in 'S4DS' folder", uploadJson.storagePath?.startsWith("S4DS/"));
+    record("Cloudinary Subfolder Architecture: Assets organized into subfolders inside S4DS", uploadJson.folder?.startsWith("S4DS/"));
     record("RushDB Integration: Automatically stores media metadata with MEDIA_ITEM label", Boolean(uploadJson.mediaId));
 
     const uploadedMediaId = uploadJson.mediaId;
