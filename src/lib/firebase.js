@@ -8,8 +8,8 @@ export const firebaseConfig = {
   projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || "s4dsmitaoe",
   storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || "s4dsmitaoe.firebasestorage.app",
   messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || "23303549931",
-  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID || "1:23303549931:web:803340dada1b86c9b45fae",
-  measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID || "G-E19JVQ7RBN"
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID || "1:23303549931:web:404eed6fd36baa5eb45fae",
+  measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID || "G-P10PLZDH5Y"
 };
 
 // Initialize Firebase App safely (singleton pattern across SSR & client)
