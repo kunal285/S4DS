@@ -1714,6 +1714,8 @@ export function getDefaultSettings() {
       whatsappEnabled: true,
       paymentInstructions:
         "1. Scan the official S4DS UPI QR code below using any UPI app (GPay, PhonePe, Paytm).\n2. Enter the exact registration fee shown for your membership category.\n3. Note down the 12-digit UPI Transaction ID / UTR.\n4. Take a clear screenshot of the completed payment and upload it below.",
+      upiId: process.env.NEXT_PUBLIC_UPI_ID || "9172106568@airtel",
+      upiPayeeName: "S4DS MITAOE",
       activePaymentQrId: "media-1794863268432-zvv7",
       activePaymentQrUrl:
         "https://cflqsjjkekfrnjjbhuja.supabase.co/storage/v1/object/public/s4ds-media/payment/qr-codes/1794863268060_s4ds-official-technex-qr.png",
@@ -1902,6 +1904,10 @@ export async function getTechnexConfig() {
     technex.whatsappEnabled = settings.technexWhatsappEnabled !== false;
   }
 
+  // Ensure dynamic UPI payment parameters
+  technex.upiId = technex.upiId || settings.upiId || process.env.NEXT_PUBLIC_UPI_ID || "9172106568@airtel";
+  technex.upiPayeeName = technex.upiPayeeName || settings.upiPayeeName || "S4DS MITAOE";
+
   setCached("technexConfig", technex);
   return technex;
 }
@@ -1916,6 +1922,13 @@ export async function updateTechnexConfig(updates) {
   const topLevelUpdates = {
     technex: mergedTechnex,
   };
+
+  if (updates.upiId) {
+    topLevelUpdates.upiId = updates.upiId;
+  }
+  if (updates.upiPayeeName) {
+    topLevelUpdates.upiPayeeName = updates.upiPayeeName;
+  }
 
   if (updates.whatsappUrl) {
     topLevelUpdates.technexWhatsappUrl = updates.whatsappUrl;

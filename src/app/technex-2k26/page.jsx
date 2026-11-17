@@ -837,28 +837,58 @@ export default function TechnexPage() {
               <div className="grid grid-cols-1 md:grid-cols-12 gap-6 p-6 rounded-2xl bg-background-elevated border border-brand-orange/30 shadow-lg">
                 {/* QR Image Box */}
                 <div className="md:col-span-5 flex flex-col items-center justify-center p-4 rounded-xl bg-[#17110D] border border-brand-border space-y-3">
-                  <div className="relative w-48 h-48 rounded-xl overflow-hidden border-2 border-brand-orange/40 bg-white p-2 shadow-inner">
-                    {qrLoading || !qrCodeUrl ? (
-                      <div className="w-full h-full flex items-center justify-center text-xs text-brand-muted">
-                        Loading QR Code...
-                      </div>
-                    ) : (
-                      <Image
-                        src={qrCodeUrl}
-                        alt="Official Payment QR Code"
-                        fill
-                        className="object-contain p-1"
-                        priority
-                      />
-                    )}
+                  <div className="relative w-52 h-52 rounded-xl overflow-hidden border-2 border-brand-orange/40 bg-white p-2 shadow-inner flex items-center justify-center">
+                    <Image
+                      key={`qr-${formData.registrationFee}`}
+                      src={`/api/technex/qr?amount=${formData.registrationFee}&tier=${encodeURIComponent(formData.membershipType)}`}
+                      alt={`Official Payment QR Code for ₹${formData.registrationFee}`}
+                      width={200}
+                      height={200}
+                      className="object-contain"
+                      priority
+                      unoptimized
+                    />
                   </div>
-                  <div className="text-center space-y-1">
-                    <span className="text-[11px] font-bold text-brand-yellow uppercase tracking-wider block">
+                  <div className="text-center space-y-1 w-full">
+                    <span className="text-xs font-black text-brand-yellow uppercase tracking-wider block">
                       Scan to Pay ₹{formData.registrationFee}
                     </span>
-                    <span className="text-[10px] text-brand-muted block">
+                    <span className="inline-block px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 text-[10px] font-bold">
+                      ✓ Amount ₹{formData.registrationFee} pre-filled on scan
+                    </span>
+                    <span className="text-[10px] text-brand-muted block pt-0.5">
                       Accepts Google Pay, PhonePe, Paytm &amp; all UPI apps
                     </span>
+                  </div>
+
+                  {/* Direct Mobile Pay Button */}
+                  <a
+                    href={`upi://pay?pa=${encodeURIComponent(config?.upiId || "9172106568@airtel")}&pn=${encodeURIComponent(config?.upiPayeeName || "S4DS MITAOE")}&am=${Number(formData.registrationFee).toFixed(2)}&cu=INR&tn=${encodeURIComponent(`TECHNEX 2K26 - ${formData.membershipType}`)}`}
+                    className="w-full py-2.5 px-3 rounded-xl brand-btn text-white text-xs font-bold flex items-center justify-center gap-1.5 shadow-md transition-transform hover:scale-[1.02] active:scale-95"
+                  >
+                    <Zap className="w-3.5 h-3.5 text-brand-yellow" />
+                    Pay ₹{formData.registrationFee} via UPI App
+                  </a>
+
+                  {/* Copy UPI ID Widget */}
+                  <div className="w-full flex items-center justify-between p-2 rounded-xl bg-background-card border border-brand-border text-xs">
+                    <div className="flex flex-col text-left truncate mr-2">
+                      <span className="text-[9px] uppercase font-bold text-brand-muted">UPI ID:</span>
+                      <span className="font-mono text-white text-[11px] truncate">
+                        {config?.upiId || "9172106568@airtel"}
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const id = config?.upiId || "9172106568@airtel";
+                        navigator.clipboard.writeText(id);
+                        setToast({ type: "success", message: `Copied UPI ID: ${id}` });
+                      }}
+                      className="px-2.5 py-1 rounded-lg bg-background-elevated hover:bg-brand-orange/20 border border-brand-border text-brand-orange hover:text-brand-yellow font-bold text-xs flex items-center gap-1 transition-colors shrink-0"
+                    >
+                      <Copy className="w-3 h-3" /> Copy
+                    </button>
                   </div>
                 </div>
 

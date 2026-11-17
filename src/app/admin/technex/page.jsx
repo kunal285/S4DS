@@ -61,6 +61,8 @@ export default function AdminTechnexPage() {
     whatsappUrl: "",
     whatsappEnabled: true,
     paymentInstructions: "",
+    upiId: "9172106568@airtel",
+    upiPayeeName: "S4DS MITAOE",
     activePaymentQrId: "",
     activePaymentQrUrl: "",
     posterUrl: "",
@@ -101,6 +103,8 @@ export default function AdminTechnexPage() {
           whatsappUrl: jsonConfig.data.whatsappUrl || "",
           whatsappEnabled: jsonConfig.data.whatsappEnabled !== false,
           paymentInstructions: jsonConfig.data.paymentInstructions || "",
+          upiId: jsonConfig.data.upiId || "9172106568@airtel",
+          upiPayeeName: jsonConfig.data.upiPayeeName || "S4DS MITAOE",
           activePaymentQrId: jsonConfig.data.activePaymentQrId || "",
           activePaymentQrUrl: jsonConfig.data.activePaymentQrUrl || "",
           posterUrl: jsonConfig.data.posterUrl || "",
@@ -507,6 +511,30 @@ export default function AdminTechnexPage() {
 
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
             <div className="lg:col-span-8 space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-brand-secondary">Official UPI ID (VPA) *</label>
+                  <input
+                    type="text"
+                    required
+                    value={form.upiId}
+                    onChange={(e) => setForm({ ...form, upiId: e.target.value })}
+                    placeholder="e.g. 9172106568@airtel"
+                    className="w-full px-4 py-2.5 rounded-xl bg-background-elevated border border-brand-border text-xs text-white focus:outline-none focus:border-brand-orange font-mono"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-brand-secondary">UPI Payee Display Name</label>
+                  <input
+                    type="text"
+                    value={form.upiPayeeName}
+                    onChange={(e) => setForm({ ...form, upiPayeeName: e.target.value })}
+                    placeholder="e.g. S4DS MITAOE"
+                    className="w-full px-4 py-2.5 rounded-xl bg-background-elevated border border-brand-border text-xs text-white focus:outline-none focus:border-brand-orange"
+                  />
+                </div>
+              </div>
+
               <div className="space-y-1.5">
                 <label className="text-xs font-semibold text-brand-secondary">Payment Instructions Text *</label>
                 <textarea
