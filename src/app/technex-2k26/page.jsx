@@ -849,9 +849,6 @@ export default function TechnexPage() {
                     <span className="text-xs font-black text-brand-yellow uppercase tracking-wider block">
                       Scan to Pay ₹{formData.registrationFee}
                     </span>
-                    <span className="inline-block px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 text-[10px] font-bold">
-                      ✓ Amount ₹{formData.registrationFee} pre-filled on scan
-                    </span>
                     <span className="text-[10px] text-brand-muted block pt-0.5">
                       Accepts Google Pay, PhonePe, Paytm &amp; all UPI apps
                     </span>
