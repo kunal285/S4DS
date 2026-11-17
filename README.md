@@ -205,11 +205,8 @@ To create an optimized production build:
 npm run build
 npm run start
 ```
-
 ---
-
 ## 🏛️ Project Directory Structure
-
 ```
 S4ds/
 ├── public/                     # Static icons, logos, and public images

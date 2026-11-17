@@ -1,6 +1,4 @@
 import Link from "next/link";
-import { isRouteLive } from "@/config/site-mode";
-import UnderDevelopment from "@/components/UnderDevelopment";
 import { getSettings } from "@/lib/db";
 import {
   CheckCircle2,
@@ -27,10 +25,6 @@ export async function generateMetadata() {
 }
 
 export default async function AboutPage() {
-  if (!(await isRouteLive("/about"))) {
-    return <UnderDevelopment section="About Us" />;
-  }
-
   const settings = await getSettings();
   const about = settings.about || {};
 

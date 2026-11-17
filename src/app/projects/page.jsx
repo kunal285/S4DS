@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import UnderDevelopment from "@/components/UnderDevelopment";
 import {
   Code2,
   Sparkles,
@@ -17,9 +16,6 @@ import LoadingSkeleton from "@/components/LoadingSkeleton";
 import EmptyState from "@/components/EmptyState";
 
 export default function ProjectsPage() {
-  const [isLive, setIsLive] = useState(false);
-  const [checkingMode, setCheckingMode] = useState(true);
-
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -35,53 +31,8 @@ export default function ProjectsPage() {
   ];
 
   useEffect(() => {
-    fetch("/api/settings")
-      .then((r) => r.json())
-      .then((json) => {
-        if (json.success && json.data) {
-          setIsLive(Boolean(json.data.pageAvailability?.projects));
-        }
-      })
-      .catch(() => setIsLive(false))
-      .finally(() => setCheckingMode(false));
-  }, []);
-
-  useEffect(() => {
-    if (isLive) {
-      fetchProjects();
-    }
-  }, [domain, isLive]);
-
-  const fetchProjects = async () => {
-    setLoading(true);
-    try {
-      const params = new URLSearchParams();
-      if (domain !== "All") params.append("domain", domain);
-
-      const res = await fetch(`/api/projects?${params.toString()}`);
-      const data = await res.json();
-      if (data.success) {
-        setProjects(data.data || []);
-      }
-    } catch (err) {
-      console.warn("Failed to fetch projects:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  if (checkingMode) {
-    return (
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 flex flex-col items-center justify-center space-y-3">
-        <div className="w-8 h-8 border-3 border-brand-orange border-t-transparent rounded-full animate-spin" />
-        <p className="text-xs text-brand-muted">Loading projects portal...</p>
-      </div>
-    );
-  }
-
-  if (!isLive) {
-    return <UnderDevelopment section="Projects & Innovations" />;
-  }
+    fetchProjects();
+  }, [domain]);
 
   const filtered = projects.filter((p) => {
     if (!search) return true;

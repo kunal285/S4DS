@@ -83,57 +83,57 @@ export default async function Footer() {
             <ul className="space-y-2 text-sm">
               <li>
                 <Link href="/" className="hover:text-brand-orange transition-colors">
-                  Home (Live)
+                  Home
                 </Link>
               </li>
               <li>
                 <Link href="/technex-2k26" className="text-brand-yellow hover:text-brand-orange font-semibold transition-colors flex items-center gap-1.5">
                   <span className="w-1.5 h-1.5 rounded-full bg-brand-yellow animate-pulse" />
-                  TECHNEX 2K26 (Live)
+                  TECHNEX 2K26
                 </Link>
               </li>
               <li>
                 <Link href="/contact" className="hover:text-brand-orange transition-colors">
-                  Contact Us (Live)
+                  Contact Us
                 </Link>
               </li>
               <li>
-                <Link href="/about" className="hover:text-brand-orange transition-colors text-brand-muted/70 flex items-center gap-1.5">
-                  About Chapter <span className="text-[10px] text-brand-muted">(Soon)</span>
+                <Link href="/about" className="hover:text-brand-orange transition-colors">
+                  About Chapter
                 </Link>
               </li>
               <li>
-                <Link href="/events" className="hover:text-brand-orange transition-colors text-brand-muted/70 flex items-center gap-1.5">
-                  Workshops &amp; Events <span className="text-[10px] text-brand-muted">(Soon)</span>
+                <Link href="/events" className="hover:text-brand-orange transition-colors">
+                  Workshops &amp; Events
                 </Link>
               </li>
             </ul>
           </div>
 
-          {/* Col 3: Initiatives & Programs */}
+          {/* Col 3: Initiatives & Team */}
           <div className="space-y-3">
             <h3 className="text-sm font-bold uppercase tracking-wider text-brand-white">
               Initiatives &amp; Team
             </h3>
             <ul className="space-y-2 text-sm">
               <li>
-                <Link href="/team" className="hover:text-brand-orange transition-colors text-brand-muted/70 flex items-center gap-1.5">
-                  Executive Team <span className="text-[10px] text-brand-muted">(Soon)</span>
+                <Link href="/team" className="hover:text-brand-orange transition-colors">
+                  Executive Team
                 </Link>
               </li>
               <li>
-                <Link href="/gallery" className="hover:text-brand-orange transition-colors text-brand-muted/70 flex items-center gap-1.5">
-                  Event Gallery <span className="text-[10px] text-brand-muted">(Soon)</span>
+                <Link href="/gallery" className="hover:text-brand-orange transition-colors">
+                  Event Gallery
                 </Link>
               </li>
               <li>
-                <Link href="/projects" className="hover:text-brand-orange transition-colors text-brand-muted/70 flex items-center gap-1.5">
-                  Student Projects <span className="text-[10px] text-brand-muted">(Soon)</span>
+                <Link href="/projects" className="hover:text-brand-orange transition-colors">
+                  Student Projects
                 </Link>
               </li>
               <li>
-                <Link href="/membership" className="hover:text-brand-orange transition-colors text-brand-muted/70 flex items-center gap-1.5">
-                  Membership Portal <span className="text-[10px] text-brand-muted">(Soon)</span>
+                <Link href="/membership" className="hover:text-brand-orange transition-colors">
+                  Membership Portal
                 </Link>
               </li>
             </ul>

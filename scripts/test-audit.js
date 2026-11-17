@@ -633,7 +633,7 @@ async function runAudit() {
 
     const sitemapRes = await fetch(`${BASE_URL}/sitemap.xml`);
     const sitemapXml = await sitemapRes.text();
-    record("SEO: sitemap.xml dynamically lists all canonical live routes", sitemapRes.status === 200 && sitemapXml.includes("/technex-2k26") && sitemapXml.includes("/contact") && !sitemapXml.includes("/events"));
+    record("SEO: sitemap.xml dynamically lists all canonical live routes", sitemapRes.status === 200 && sitemapXml.includes("/technex-2k26") && sitemapXml.includes("/contact") && sitemapXml.includes("/events"));
 
     // ----------------------------------------------------
     // CHECK 13: Dashboard Analytics & Stats API

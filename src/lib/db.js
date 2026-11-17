@@ -1809,17 +1809,17 @@ export function getDefaultSettings() {
     technexWhatsappUrl: "https://chat.whatsapp.com/KFYW22NYGasBag1RZjnKJl",
     technexWhatsappEnabled: true,
 
-    launchMode: true,
+    launchMode: false,
     pageAvailability: {
       home: true,
       technex: true,
       contact: true,
-      about: false,
-      events: false,
-      team: false,
-      gallery: false,
-      projects: false,
-      membership: false,
+      about: true,
+      events: true,
+      team: true,
+      gallery: true,
+      projects: true,
+      membership: true,
     },
   };
 }

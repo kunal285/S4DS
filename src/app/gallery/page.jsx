@@ -2,15 +2,11 @@
 
 import { useState, useEffect } from "react";
 import Image from "next/image";
-import UnderDevelopment from "@/components/UnderDevelopment";
 import { Image as ImageIcon, Calendar, X, ZoomIn } from "lucide-react";
 import LoadingSkeleton from "@/components/LoadingSkeleton";
 import EmptyState from "@/components/EmptyState";
 
 export default function GalleryPage() {
-  const [isLive, setIsLive] = useState(false);
-  const [checkingMode, setCheckingMode] = useState(true);
-
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -20,35 +16,8 @@ export default function GalleryPage() {
   const categories = ["All", "Expos", "Workshops", "Community"];
 
   useEffect(() => {
-    fetch("/api/settings")
-      .then((r) => r.json())
-      .then((json) => {
-        if (json.success && json.data) {
-          setIsLive(Boolean(json.data.pageAvailability?.gallery));
-        }
-      })
-      .catch(() => setIsLive(false))
-      .finally(() => setCheckingMode(false));
-  }, []);
-
-  useEffect(() => {
-    if (isLive) {
-      fetchGallery();
-    }
-  }, [category, isLive]);
-
-  if (checkingMode) {
-    return (
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 flex flex-col items-center justify-center space-y-3">
-        <div className="w-8 h-8 border-3 border-brand-orange border-t-transparent rounded-full animate-spin" />
-        <p className="text-xs text-brand-muted">Loading event gallery...</p>
-      </div>
-    );
-  }
-
-  if (!isLive) {
-    return <UnderDevelopment section="Event Gallery" />;
-  }
+    fetchGallery();
+  }, [category]);
 
   const fetchGallery = async () => {
     setLoading(true);

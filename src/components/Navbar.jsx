@@ -31,28 +31,17 @@ export default function Navbar() {
       .catch((err) => console.warn("Notice: Fetching navbar settings:", err));
   }, []);
 
-  const pageAvailability = settings?.pageAvailability || {
-    home: true,
-    technex: true,
-    contact: true,
-    about: false,
-    events: false,
-    team: false,
-    gallery: false,
-    projects: false,
-    membership: false,
-  };
-
-  // Dynamic Navigation Items with live status from RushDB
+  // Navigation Items
   const navItems = [
-    { name: "Home", href: "/", isLive: pageAvailability.home !== false },
-    { name: "About Us", href: "/about", isLive: Boolean(pageAvailability.about) },
-    { name: "Events", href: "/events", isLive: Boolean(pageAvailability.events) },
-    { name: "TECHNEX 2K26", href: "/technex-2k26", isLive: pageAvailability.technex !== false, badge: "Live" },
-    { name: "Projects", href: "/projects", isLive: Boolean(pageAvailability.projects) },
-    { name: "Our Team", href: "/team", isLive: Boolean(pageAvailability.team) },
-    { name: "Gallery", href: "/gallery", isLive: Boolean(pageAvailability.gallery) },
-    { name: "Contact", href: "/contact", isLive: pageAvailability.contact !== false },
+    { name: "Home", href: "/" },
+    { name: "About Us", href: "/about" },
+    { name: "Events", href: "/events" },
+    { name: "TECHNEX 2K26", href: "/technex-2k26", badge: "Live" },
+    { name: "Projects", href: "/projects" },
+    { name: "Our Team", href: "/team" },
+    { name: "Gallery", href: "/gallery" },
+    { name: "Membership", href: "/membership" },
+    { name: "Contact", href: "/contact" },
   ];
 
   const isActive = (href) => {
@@ -94,44 +83,22 @@ export default function Navbar() {
           <nav className="hidden lg:flex items-center gap-1">
             {navItems.map((item) => {
               const active = isActive(item.href);
-
-              if (item.isLive) {
-                return (
-                  <Link
-                    key={item.name}
-                    href={item.href}
-                    className={`relative px-3 py-2 text-xs font-semibold rounded-lg transition-all duration-150 flex items-center gap-1.5 ${
-                      active
-                        ? "text-brand-yellow bg-brand-orange/20 border border-brand-orange/40 shadow-sm"
-                        : "text-brand-secondary hover:text-white hover:bg-background-elevated"
-                    }`}
-                  >
-                    {item.name}
-                    {item.badge && (
-                      <span className="px-1.5 py-0.5 text-[9px] font-black uppercase rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
-                        {item.badge}
-                      </span>
-                    )}
-                  </Link>
-                );
-              }
-
-              // Under development items: Clickable link opening development preview
               return (
                 <Link
                   key={item.name}
                   href={item.href}
                   className={`relative px-3 py-2 text-xs font-semibold rounded-lg transition-all duration-150 flex items-center gap-1.5 ${
                     active
-                      ? "text-brand-yellow bg-brand-orange/20 border border-brand-orange/40"
-                      : "text-brand-secondary/80 hover:text-white hover:bg-background-elevated"
+                      ? "text-brand-yellow bg-brand-orange/20 border border-brand-orange/40 shadow-sm"
+                      : "text-brand-secondary hover:text-white hover:bg-background-elevated"
                   }`}
-                  title={`${item.name} is currently under development (Preview)`}
                 >
-                  <span>{item.name}</span>
-                  <span className="px-1.5 py-0.5 rounded text-[8px] font-extrabold uppercase bg-brand-orange/15 text-brand-orange border border-brand-orange/30">
-                    Soon
-                  </span>
+                  {item.name}
+                  {item.badge && (
+                    <span className="px-1.5 py-0.5 text-[9px] font-black uppercase rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
+                      {item.badge}
+                    </span>
+                  )}
                 </Link>
               );
             })}
@@ -167,31 +134,6 @@ export default function Navbar() {
           <div className="flex flex-col gap-1.5">
             {navItems.map((item) => {
               const active = isActive(item.href);
-
-              if (item.isLive) {
-                return (
-                  <Link
-                    key={item.name}
-                    href={item.href}
-                    onClick={() => setIsOpen(false)}
-                    className={`px-4 py-3 rounded-xl text-sm font-semibold flex items-center justify-between transition-colors ${
-                      active
-                        ? "text-brand-yellow bg-brand-orange/20 border border-brand-orange/40"
-                        : "text-brand-white hover:bg-background-elevated"
-                    }`}
-                  >
-                    <span>{item.name}</span>
-                    {item.badge ? (
-                      <span className="px-2 py-0.5 text-[9px] font-black uppercase rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
-                        {item.badge}
-                      </span>
-                    ) : (
-                      <ChevronRight className="w-4 h-4 text-brand-muted" />
-                    )}
-                  </Link>
-                );
-              }
-
               return (
                 <Link
                   key={item.name}
@@ -200,16 +142,17 @@ export default function Navbar() {
                   className={`px-4 py-3 rounded-xl text-sm font-semibold flex items-center justify-between transition-colors ${
                     active
                       ? "text-brand-yellow bg-brand-orange/20 border border-brand-orange/40"
-                      : "text-brand-secondary hover:text-white hover:bg-background-elevated"
+                      : "text-brand-white hover:bg-background-elevated"
                   }`}
                 >
-                  <span className="flex items-center gap-2">
-                    {item.name}
-                    <span className="px-1.5 py-0.5 text-[8px] font-extrabold uppercase rounded bg-brand-orange/15 text-brand-orange border border-brand-orange/30">
-                      Soon
+                  <span>{item.name}</span>
+                  {item.badge ? (
+                    <span className="px-2 py-0.5 text-[9px] font-black uppercase rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
+                      {item.badge}
                     </span>
-                  </span>
-                  <ChevronRight className="w-4 h-4 text-brand-muted" />
+                  ) : (
+                    <ChevronRight className="w-4 h-4 text-brand-muted" />
+                  )}
                 </Link>
               );
             })}

@@ -2,15 +2,11 @@
 
 import { useState, useEffect } from "react";
 import Image from "next/image";
-import UnderDevelopment from "@/components/UnderDevelopment";
 import { Linkedin, Github, Users, Mail, GraduationCap } from "lucide-react";
 import LoadingSkeleton from "@/components/LoadingSkeleton";
 import EmptyState from "@/components/EmptyState";
 
 export default function TeamPage() {
-  const [isLive, setIsLive] = useState(false);
-  const [checkingMode, setCheckingMode] = useState(true);
-
   const [team, setTeam] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -25,35 +21,8 @@ export default function TeamPage() {
   ];
 
   useEffect(() => {
-    fetch("/api/settings")
-      .then((r) => r.json())
-      .then((json) => {
-        if (json.success && json.data) {
-          setIsLive(Boolean(json.data.pageAvailability?.team));
-        }
-      })
-      .catch(() => setIsLive(false))
-      .finally(() => setCheckingMode(false));
+    fetchTeam();
   }, []);
-
-  useEffect(() => {
-    if (isLive) {
-      fetchTeam();
-    }
-  }, [isLive]);
-
-  if (checkingMode) {
-    return (
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 flex flex-col items-center justify-center space-y-3">
-        <div className="w-8 h-8 border-3 border-brand-orange border-t-transparent rounded-full animate-spin" />
-        <p className="text-xs text-brand-muted">Loading team roster...</p>
-      </div>
-    );
-  }
-
-  if (!isLive) {
-    return <UnderDevelopment section="Core Team & Faculty" />;
-  }
 
   const fetchTeam = async () => {
     setLoading(true);
