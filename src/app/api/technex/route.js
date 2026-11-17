@@ -231,22 +231,26 @@ export async function POST(request) {
           fileName: screenshotFileName,
           mimeType: screenshotMimeType,
           category: "payment-screenshot",
-          isPrivate: true,
+          folder: "S4DS",
+          isPrivate: false,
         });
-        paymentScreenshotUrl = uploadResult.fileUrl;
-        paymentScreenshotPath = uploadResult.storagePath;
+        paymentScreenshotUrl = uploadResult.secure_url || uploadResult.fileUrl;
+        paymentScreenshotPath = uploadResult.public_id || uploadResult.storagePath;
 
         // Link screenshot reference as MEDIA_ITEM in RushDB
         try {
           const mediaRecord = await createMediaItem({
             title: `Payment Proof - ${teamName.trim()}`,
             category: "payment-screenshot",
+            folder: "S4DS",
             fileName: screenshotFileName,
-            storagePath: uploadResult.storagePath,
-            fileUrl: uploadResult.fileUrl,
+            storagePath: uploadResult.public_id || uploadResult.storagePath,
+            publicId: uploadResult.public_id || uploadResult.storagePath,
+            fileUrl: uploadResult.secure_url || uploadResult.fileUrl,
+            secureUrl: uploadResult.secure_url || uploadResult.fileUrl,
             fileSize: screenshotFileSize,
             mimeType: screenshotMimeType,
-            isPrivate: true,
+            isPrivate: false,
             isActive: true,
           });
           if (mediaRecord?.id) {

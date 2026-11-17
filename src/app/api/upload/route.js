@@ -44,7 +44,7 @@ export async function POST(request) {
     const arrayBuffer = await file.arrayBuffer();
     const fileBuffer = Buffer.from(arrayBuffer);
 
-    // 1. Upload file to Cloudinary Storage
+    // 1. Upload file to Cloudinary Storage inside the S4DS folder
     const isPrivate = category === "payment-screenshot" || category === "document";
     const uploadResult = await uploadToCloudinary({
       fileBuffer,
@@ -52,6 +52,7 @@ export async function POST(request) {
       mimeType: file.type,
       category,
       isPrivate,
+      folder: "S4DS",
     });
 
     // 2. Save metadata and reference in RushDB (MEDIA_ITEM label)
@@ -59,9 +60,11 @@ export async function POST(request) {
       title: title || file.name,
       fileName: file.name,
       category,
-      folder: uploadResult.folder,
-      storagePath: uploadResult.storagePath,
-      fileUrl: uploadResult.fileUrl,
+      folder: "S4DS",
+      storagePath: uploadResult.public_id || uploadResult.storagePath,
+      publicId: uploadResult.public_id || uploadResult.storagePath,
+      fileUrl: uploadResult.secure_url || uploadResult.fileUrl,
+      secureUrl: uploadResult.secure_url || uploadResult.fileUrl,
       fileSize: file.size,
       mimeType: file.type,
       isPrivate: uploadResult.isPrivate,
@@ -71,10 +74,13 @@ export async function POST(request) {
 
     return NextResponse.json({
       success: true,
-      message: "File uploaded to Cloudinary and registered in RushDB successfully.",
-      url: uploadResult.fileUrl,
-      fileUrl: uploadResult.fileUrl,
-      storagePath: uploadResult.storagePath,
+      message: "File uploaded to Cloudinary S4DS folder and registered in RushDB successfully.",
+      url: uploadResult.secure_url || uploadResult.fileUrl,
+      fileUrl: uploadResult.secure_url || uploadResult.fileUrl,
+      secureUrl: uploadResult.secure_url || uploadResult.fileUrl,
+      publicId: uploadResult.public_id,
+      storagePath: uploadResult.public_id || uploadResult.storagePath,
+      folder: "S4DS",
       mediaId: mediaRecord.id,
       media: mediaRecord,
       fileName: file.name,

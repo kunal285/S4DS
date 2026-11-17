@@ -554,6 +554,7 @@ async function runAudit() {
     const uploadJson = await uploadRes.json();
     const isCloudinaryUrl = uploadJson.url?.includes("cloudinary.com") || (uploadJson.storagePath && uploadJson.success);
     record("Cloudinary Storage: Handles multipart upload and returns storage reference", uploadRes.status === 200 && isCloudinaryUrl);
+    record("Cloudinary Target Folder: Asset stored in 'S4DS' folder", uploadJson.storagePath?.startsWith("S4DS/"));
     record("RushDB Integration: Automatically stores media metadata with MEDIA_ITEM label", Boolean(uploadJson.mediaId));
 
     const uploadedMediaId = uploadJson.mediaId;

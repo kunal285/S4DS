@@ -16,16 +16,18 @@ cloudinary.config({
   secure: true,
 });
 
+export const TARGET_FOLDER = "S4DS";
+
 export const CATEGORY_FOLDERS = {
-  "payment-qr": "s4ds/payment/qr-codes",
-  "payment-screenshot": "s4ds/payment/screenshots",
-  "event-poster": "s4ds/events/posters",
-  "event-gallery": "s4ds/events/gallery",
-  "team-profile": "s4ds/team/profiles",
-  "project-image": "s4ds/projects/thumbnails",
-  "website-banner": "s4ds/website/banners",
-  "logo": "s4ds/website/logos",
-  "document": "s4ds/documents/resources",
+  "payment-qr": "S4DS",
+  "payment-screenshot": "S4DS",
+  "event-poster": "S4DS",
+  "event-gallery": "S4DS",
+  "team-profile": "S4DS",
+  "project-image": "S4DS",
+  "website-banner": "S4DS",
+  "logo": "S4DS",
+  "document": "S4DS",
 };
 
 export const CATEGORY_LABELS = {
@@ -41,7 +43,7 @@ export const CATEGORY_LABELS = {
 };
 
 /**
- * Uploads a file buffer to Cloudinary.
+ * Uploads a file buffer to Cloudinary directly inside the existing 'S4DS' folder.
  */
 export async function uploadToCloudinary({
   fileBuffer,
@@ -49,21 +51,28 @@ export async function uploadToCloudinary({
   mimeType = "image/png",
   category = "event-poster",
   isPrivate = false,
+  folder = TARGET_FOLDER,
 }) {
-  const folder = CATEGORY_FOLDERS[category] || "s4ds/general";
+  const targetFolder = folder || TARGET_FOLDER;
   const sanitizedBaseName = (fileName ? fileName.replace(/\.[^/.]+$/, "") : "media")
-    .replace(/[^a-zA-Z0-9_-]/g, "_");
-  const uniquePublicId = `${folder}/${Date.now()}_${sanitizedBaseName}`;
+    .replace(/[^a-zA-Z0-9_-]/g, "_")
+    .substring(0, 50);
+  const randomSuffix = Math.random().toString(36).substring(2, 8);
+  const uniqueId = `${Date.now()}_${sanitizedBaseName}_${randomSuffix}`;
   const isPdf = mimeType === "application/pdf" || (fileName && fileName.endsWith(".pdf"));
   const resourceType = isPdf ? "raw" : "auto";
-  const isSensitive = isPrivate || category === "payment-screenshot" || category === "document";
+  const isSensitive = Boolean(isPrivate);
 
   return new Promise((resolve, reject) => {
     const uploadOptions = {
-      public_id: uniquePublicId,
+      public_id: uniqueId,
+      folder: targetFolder,
+      asset_folder: targetFolder,
       resource_type: resourceType,
-      overwrite: true,
-      tags: ["s4ds", category],
+      overwrite: false,
+      unique_filename: true,
+      use_filename: true,
+      tags: ["S4DS", category].filter(Boolean),
     };
 
     if (isSensitive) {
@@ -80,14 +89,18 @@ export async function uploadToCloudinary({
 
         let fileUrl = result.secure_url || result.url;
         if (isSensitive) {
-          fileUrl = getSignedUrl(result.public_id, 3600, resourceType);
+          fileUrl = getSignedUrl(result.public_id, 86400 * 365, resourceType);
         }
 
         resolve({
+          public_id: result.public_id,
+          publicId: result.public_id,
           storagePath: result.public_id,
           fullPath: result.public_id,
           fileUrl,
-          folder,
+          secure_url: result.secure_url || result.url,
+          folder: targetFolder,
+          asset_folder: result.asset_folder || targetFolder,
           isPrivate: isSensitive,
           format: result.format,
           bytes: result.bytes,
