@@ -302,3 +302,35 @@ body {
 .warm-ambient-glow {
   box-shadow: 0 0 50px -10px rgba(252, 135, 6, 0.15);
 }
+
+/* ─────────────────────────────────────────────────────────────
+   PERFORMANCE & MOBILE SMOOTHNESS OPTIMIZATIONS
+───────────────────────────────────────────────────────────── */
+html {
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Hardware accelerated smooth transitions */
+.brand-btn,
+.glass-card {
+  will-change: transform, opacity;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
+/* Optimize touch responsiveness on mobile devices */
+a, button, input, select, textarea {
+  touch-action: manipulation;
+}
+
+/* Accessibility & battery saving for users requesting reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  *, ::before, ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

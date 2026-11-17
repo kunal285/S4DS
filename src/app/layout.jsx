@@ -51,6 +51,10 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en" className="dark scroll-smooth">
+      <head>
+        <link rel="preconnect" href="https://cflqsjjkekfrnjjbhuja.supabase.co" crossOrigin="anonymous" />
+        <link rel="dns-prefetch" href="https://cflqsjjkekfrnjjbhuja.supabase.co" />
+      </head>
       <body className="min-h-screen flex flex-col bg-background-main text-brand-white antialiased selection:bg-brand-orange selection:text-white">
         <Navbar />
         <main className="flex-1 pt-20">{children}</main>

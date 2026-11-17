@@ -42,39 +42,54 @@ function WhatsAppIcon({ className = "w-5 h-5" }) {
   );
 }
 
-export default function TechnexPage() {
-  const [config, setConfig] = useState(null);
-  const [loadingConfig, setLoadingConfig] = useState(true);
+let clientTechnexCache = null;
+let clientTechnexTime = 0;
 
-  const [formData, setFormData] = useState({
-    membershipType: "S4DS Member",
-    registrationFee: 49,
-    teamName: "",
-    projectTitle: "",
-    domain: "",
-    abstractSummary: "",
-    githubOrDriveUrl: "",
-    leaderName: "",
-    leaderEmail: "",
-    leaderPhone: "",
-    leaderCollege: "MIT Academy of Engineering, Pune",
-    leaderPrn: "",
-    leaderDepartment: "Computer Engineering",
-    leaderYear: "Third Year",
-    leaderDivision: "A",
-    teamMembers: [],
-    utr: "",
+export default function TechnexPage() {
+  const [config, setConfig] = useState(clientTechnexCache);
+  const [loadingConfig, setLoadingConfig] = useState(!clientTechnexCache);
+
+  const [formData, setFormData] = useState(() => {
+    const cfg = clientTechnexCache;
+    const tiers = cfg?.membershipTiers || [];
+    const initialTier = tiers[0] || { name: "S4DS Member", fee: 49 };
+    const initialDomain = cfg?.domains?.[0] || "Artificial Intelligence & ML";
+
+    return {
+      membershipType: initialTier.name,
+      registrationFee: initialTier.fee,
+      teamName: "",
+      projectTitle: "",
+      domain: initialDomain,
+      abstractSummary: "",
+      githubOrDriveUrl: "",
+      leaderName: "",
+      leaderEmail: "",
+      leaderPhone: "",
+      leaderCollege: "MIT Academy of Engineering, Pune",
+      leaderPrn: "",
+      leaderDepartment: "Computer Engineering",
+      leaderYear: "Third Year",
+      leaderDivision: "A",
+      teamMembers: [],
+      utr: "",
+    };
   });
 
   const [screenshotFile, setScreenshotFile] = useState(null);
   const [previewUrl, setPreviewUrl] = useState("");
-  const [qrCodeUrl, setQrCodeUrl] = useState("");
-  const [qrLoading, setQrLoading] = useState(true);
+  const [qrCodeUrl, setQrCodeUrl] = useState(() => clientTechnexCache?.activePaymentQrUrl || "");
+  const [qrLoading, setQrLoading] = useState(!clientTechnexCache?.activePaymentQrUrl);
   const [submitting, setSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [toast, setToast] = useState(null);
 
   useEffect(() => {
+    if (clientTechnexCache && Date.now() - clientTechnexTime < 60000) {
+      setLoadingConfig(false);
+      setQrLoading(false);
+      return;
+    }
     fetchConfig();
   }, []);
 
@@ -84,6 +99,8 @@ export default function TechnexPage() {
       const json = await res.json();
       if (json.success && json.data) {
         const cfg = json.data;
+        clientTechnexCache = cfg;
+        clientTechnexTime = Date.now();
         setConfig(cfg);
 
         const tiers = cfg.membershipTiers || [];
@@ -365,6 +382,7 @@ export default function TechnexPage() {
               src={config?.posterUrl || "/images/technex-poster.png"}
               alt={`${config?.title || "TECHNEX 2K26"} Official Expo Poster`}
               fill
+              sizes="(max-width: 640px) 100vw, 384px"
               className="object-cover"
               priority
             />
@@ -391,36 +409,6 @@ export default function TechnexPage() {
           ))}
         </div>
       </div>
-
-      {/* ── Official WhatsApp Group Banner ── */}
-      {config?.whatsappEnabled !== false && config?.whatsappUrl && (
-        <div className="p-6 sm:p-8 rounded-3xl bg-gradient-to-r from-[#17110D] via-[#1b251d] to-[#121c14] border-2 border-[#25D366]/40 shadow-2xl relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-80 h-80 bg-[#25D366]/10 rounded-full blur-3xl pointer-events-none" />
-          <div className="flex flex-col md:flex-row items-center justify-between gap-6 relative z-10">
-            <div className="space-y-1.5 text-center md:text-left">
-              <div className="inline-flex items-center gap-2 text-xs font-black uppercase tracking-wider text-[#25D366]">
-                <WhatsAppIcon className="w-4 h-4" /> Official Event Channel
-              </div>
-              <h3 className="text-xl sm:text-2xl font-black text-white">
-                Join the Official TECHNEX 2K26 WhatsApp Group
-              </h3>
-              <p className="text-xs sm:text-sm text-[#FFF1DF]/90 max-w-xl leading-relaxed">
-                Connect with fellow participants, receive official announcements, expo hall room allocations, and live schedule updates.
-              </p>
-            </div>
-            <a
-              href={config.whatsappUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="w-full md:w-auto px-7 py-3.5 rounded-2xl bg-[#25D366] hover:bg-[#20ba59] text-white font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2.5 shadow-xl shadow-[#25D366]/30 transition-all hover:scale-105 active:scale-95 shrink-0"
-            >
-              <WhatsAppIcon className="w-4 h-4 fill-current" />
-              JOIN WHATSAPP GROUP
-              <ExternalLink className="w-3.5 h-3.5" />
-            </a>
-          </div>
-        </div>
-      )}
 
       {/* ── Registration Form ── */}
       <div className="pt-8 border-t border-brand-border">
@@ -678,8 +666,10 @@ export default function TechnexPage() {
                     className="w-full px-4 py-2.5 rounded-xl bg-background-elevated border border-brand-border text-brand-white text-sm focus:outline-none focus:border-brand-orange"
                   >
                     <option value="Computer Engineering">Computer Engineering</option>
-                    <option value="AI & Data Science">AI &amp; Data Science</option>
+                    <option value="Data Science">Data Science</option>
                     <option value="Information Technology">Information Technology</option>
+                    <option value="Software Engineering">Software Engineering</option>
+                    <option value="AIML">AIML</option>
                     <option value="Electronics & Telecommunication">Electronics &amp; Telecommunication</option>
                     <option value="Mechanical Engineering">Mechanical Engineering</option>
                     <option value="Civil Engineering">Civil Engineering</option>

@@ -9,7 +9,14 @@ export async function GET(request) {
     const search = searchParams.get("search");
 
     const team = await getTeam({ domain, search });
-    return NextResponse.json({ success: true, count: team.length, data: team });
+    return NextResponse.json(
+      { success: true, count: team.length, data: team },
+      {
+        headers: {
+          "Cache-Control": "public, s-maxage=60, stale-while-revalidate=300",
+        },
+      }
+    );
   } catch (err) {
     return NextResponse.json({ error: "Failed to fetch team members" }, { status: 500 });
   }

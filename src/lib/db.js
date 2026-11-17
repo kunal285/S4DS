@@ -20,6 +20,35 @@ export { isRushDBConnected, getSchemaCatalog, getRushDBClient };
 const DATA_DIR = path.join(process.cwd(), "src", "data");
 const DB_FILE = path.join(DATA_DIR, "db.json");
 
+// High-performance in-memory cache with TTL and instant invalidation
+const memCache = new Map();
+
+export function getCached(key, ttlMs = 30000) {
+  const item = memCache.get(key);
+  if (!item) return null;
+  if (Date.now() - item.time > ttlMs) {
+    memCache.delete(key);
+    return null;
+  }
+  return item.value;
+}
+
+export function setCached(key, value) {
+  memCache.set(key, { value, time: Date.now() });
+}
+
+export function clearDbCache(pattern) {
+  if (!pattern) {
+    memCache.clear();
+    return;
+  }
+  for (const k of memCache.keys()) {
+    if (k.startsWith(pattern)) {
+      memCache.delete(k);
+    }
+  }
+}
+
 // Default initial seed data
 const getInitialSeedData = () => {
   const salt = bcrypt.genSaltSync(10);
@@ -327,6 +356,11 @@ export async function initRushDB() {
 // EVENTS CRUD (RushDB Primary + Fallback)
 // ─────────────────────────────────────────────
 export async function getEvents({ category, search, status } = {}) {
+  const cacheKey = `events:${category || "all"}:${status || "all"}:${search || ""}`;
+  const cached = getCached(cacheKey, 30000);
+  if (cached) return cached;
+
+  let sortedList = null;
   try {
     if (await isRushDBConnected()) {
       const catalog = await getSchemaCatalog();
@@ -341,47 +375,64 @@ export async function getEvents({ category, search, status } = {}) {
             (e) => e.title?.toLowerCase().includes(s) || e.description?.toLowerCase().includes(s)
           );
         }
-        return list.sort((a, b) => new Date(b.date || b.createdAt) - new Date(a.date || a.createdAt));
+        sortedList = list.sort((a, b) => new Date(b.date || b.createdAt) - new Date(a.date || a.createdAt));
       }
     }
   } catch (err) {
     console.warn("RushDB getEvents fallback:", err.message);
   }
 
-  const db = getFileDb();
-  let list = db.events || [];
+  if (!sortedList) {
+    const db = getFileDb();
+    let list = db.events || [];
 
-  if (category && category !== "All") {
-    list = list.filter((e) => e.category.toLowerCase() === category.toLowerCase());
+    if (category && category !== "All") {
+      list = list.filter((e) => e.category.toLowerCase() === category.toLowerCase());
+    }
+    if (status && status !== "All") {
+      list = list.filter((e) => e.status.toLowerCase() === status.toLowerCase());
+    }
+    if (search) {
+      const s = search.toLowerCase();
+      list = list.filter((e) => e.title.toLowerCase().includes(s) || e.description.toLowerCase().includes(s));
+    }
+    sortedList = list.sort((a, b) => new Date(b.date || b.createdAt) - new Date(a.date || a.createdAt));
   }
-  if (status && status !== "All") {
-    list = list.filter((e) => e.status.toLowerCase() === status.toLowerCase());
-  }
-  if (search) {
-    const s = search.toLowerCase();
-    list = list.filter((e) => e.title.toLowerCase().includes(s) || e.description.toLowerCase().includes(s));
-  }
-  return list.sort((a, b) => new Date(b.date || b.createdAt) - new Date(a.date || a.createdAt));
+
+  setCached(cacheKey, sortedList);
+  return sortedList;
 }
 
 export async function getEventById(id) {
+  if (!id) return null;
+  const cacheKey = `event:${id}`;
+  const cached = getCached(cacheKey, 60000);
+  if (cached) return cached;
+
+  let item = null;
   try {
     if (await isRushDBConnected()) {
       const catalog = await getSchemaCatalog();
       if (catalog.labels.has("EVENT")) {
-        const item = await findRecordById("EVENT", id);
-        if (item) return item;
+        item = await findRecordById("EVENT", id);
       }
     }
   } catch (err) {
     console.warn("RushDB getEventById fallback:", err.message);
   }
 
-  const db = getFileDb();
-  return (db.events || []).find((e) => e.id === id) || null;
+  if (!item) {
+    const db = getFileDb();
+    item = (db.events || []).find((e) => e.id === id) || null;
+  }
+
+  if (item) setCached(cacheKey, item);
+  return item;
 }
 
 export async function createEvent(data) {
+  clearDbCache("events");
+  clearDbCache("event:");
   const newEvent = {
     id: `event-${Date.now()}`,
     title: data.title || "Untitled Event",
@@ -414,6 +465,8 @@ export async function createEvent(data) {
 }
 
 export async function updateEvent(id, updates) {
+  clearDbCache("events");
+  clearDbCache("event:");
   try {
     if (await isRushDBConnected()) {
       await getSchemaCatalog();
@@ -437,6 +490,8 @@ export async function updateEvent(id, updates) {
 }
 
 export async function deleteEvent(id) {
+  clearDbCache("events");
+  clearDbCache("event:");
   try {
     if (await isRushDBConnected()) {
       await getSchemaCatalog();
@@ -457,6 +512,11 @@ export async function deleteEvent(id) {
 // TEAM CRUD (RushDB Primary + Fallback)
 // ─────────────────────────────────────────────
 export async function getTeam({ domain, search } = {}) {
+  const cacheKey = `team:${domain || "all"}:${search || ""}`;
+  const cached = getCached(cacheKey, 30000);
+  if (cached) return cached;
+
+  let sortedList = null;
   try {
     if (await isRushDBConnected()) {
       const catalog = await getSchemaCatalog();
@@ -468,46 +528,63 @@ export async function getTeam({ domain, search } = {}) {
           const s = search.toLowerCase();
           list = list.filter((m) => m.name?.toLowerCase().includes(s) || m.role?.toLowerCase().includes(s));
         }
-        return list.sort((a, b) => (a.order || 99) - (b.order || 99));
+        sortedList = list.sort((a, b) => (a.order || 99) - (b.order || 99));
       }
     }
   } catch (err) {
     console.warn("RushDB getTeam fallback:", err.message);
   }
 
-  const db = getFileDb();
-  let list = db.team || [];
+  if (!sortedList) {
+    const db = getFileDb();
+    let list = db.team || [];
 
-  if (domain && domain !== "All") {
-    list = list.filter((m) => m.domain.toLowerCase() === domain.toLowerCase());
+    if (domain && domain !== "All") {
+      list = list.filter((m) => m.domain.toLowerCase() === domain.toLowerCase());
+    }
+    if (search) {
+      const s = search.toLowerCase();
+      list = list.filter((m) => m.name.toLowerCase().includes(s) || m.role.toLowerCase().includes(s));
+    }
+    sortedList = list.sort((a, b) => (a.order || 99) - (b.order || 99));
   }
-  if (search) {
-    const s = search.toLowerCase();
-    list = list.filter((m) => m.name.toLowerCase().includes(s) || m.role.toLowerCase().includes(s));
-  }
-  return list.sort((a, b) => (a.order || 99) - (b.order || 99));
+
+  setCached(cacheKey, sortedList);
+  return sortedList;
 }
 
 export const getTeamMembers = getTeam;
 
 export async function getTeamMemberById(id) {
+  if (!id) return null;
+  const cacheKey = `teamMember:${id}`;
+  const cached = getCached(cacheKey, 60000);
+  if (cached) return cached;
+
+  let item = null;
   try {
     if (await isRushDBConnected()) {
       const catalog = await getSchemaCatalog();
       if (catalog.labels.has("TEAM_MEMBER")) {
-        const item = await findRecordById("TEAM_MEMBER", id);
-        if (item) return item;
+        item = await findRecordById("TEAM_MEMBER", id);
       }
     }
   } catch (err) {
     console.warn("RushDB getTeamMemberById fallback:", err.message);
   }
 
-  const db = getFileDb();
-  return (db.team || []).find((m) => m.id === id) || null;
+  if (!item) {
+    const db = getFileDb();
+    item = (db.team || []).find((m) => m.id === id) || null;
+  }
+
+  if (item) setCached(cacheKey, item);
+  return item;
 }
 
 export async function createTeamMember(data) {
+  clearDbCache("team");
+  clearDbCache("teamMember:");
   const db = getFileDb();
   const newMember = {
     id: `team-${Date.now()}`,
@@ -538,6 +615,8 @@ export async function createTeamMember(data) {
 }
 
 export async function updateTeamMember(id, updates) {
+  clearDbCache("team");
+  clearDbCache("teamMember:");
   try {
     if (await isRushDBConnected()) {
       await getSchemaCatalog();
@@ -561,6 +640,8 @@ export async function updateTeamMember(id, updates) {
 }
 
 export async function deleteTeamMember(id) {
+  clearDbCache("team");
+  clearDbCache("teamMember:");
   try {
     if (await isRushDBConnected()) {
       await getSchemaCatalog();
@@ -581,6 +662,11 @@ export async function deleteTeamMember(id) {
 // PROJECTS CRUD (RushDB Primary + Fallback)
 // ─────────────────────────────────────────────
 export async function getProjects({ domain, search, featuredOnly } = {}) {
+  const cacheKey = `projects:${domain || "all"}:${search || ""}:${featuredOnly ? "1" : "0"}`;
+  const cached = getCached(cacheKey, 30000);
+  if (cached) return cached;
+
+  let sortedList = null;
   try {
     if (await isRushDBConnected()) {
       const catalog = await getSchemaCatalog();
@@ -600,52 +686,69 @@ export async function getProjects({ domain, search, featuredOnly } = {}) {
               (Array.isArray(p.technologies) && p.technologies.some((t) => t.toLowerCase().includes(s)))
           );
         }
-        return list.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+        sortedList = list.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
       }
     }
   } catch (err) {
     console.warn("RushDB getProjects fallback:", err.message);
   }
 
-  const db = getFileDb();
-  let list = db.projects || [];
+  if (!sortedList) {
+    const db = getFileDb();
+    let list = db.projects || [];
 
-  if (featuredOnly) {
-    list = list.filter((p) => p.isFeatured);
+    if (featuredOnly) {
+      list = list.filter((p) => p.isFeatured);
+    }
+    if (domain && domain !== "All") {
+      list = list.filter((p) => p.domain.toLowerCase().includes(domain.toLowerCase()));
+    }
+    if (search) {
+      const s = search.toLowerCase();
+      list = list.filter(
+        (p) =>
+          p.title.toLowerCase().includes(s) ||
+          p.description.toLowerCase().includes(s) ||
+          (Array.isArray(p.technologies) && p.technologies.some((t) => t.toLowerCase().includes(s)))
+      );
+    }
+    sortedList = list.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
   }
-  if (domain && domain !== "All") {
-    list = list.filter((p) => p.domain.toLowerCase().includes(domain.toLowerCase()));
-  }
-  if (search) {
-    const s = search.toLowerCase();
-    list = list.filter(
-      (p) =>
-        p.title.toLowerCase().includes(s) ||
-        p.description.toLowerCase().includes(s) ||
-        (Array.isArray(p.technologies) && p.technologies.some((t) => t.toLowerCase().includes(s)))
-    );
-  }
-  return list.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+  setCached(cacheKey, sortedList);
+  return sortedList;
 }
 
 export async function getProjectById(id) {
+  if (!id) return null;
+  const cacheKey = `project:${id}`;
+  const cached = getCached(cacheKey, 60000);
+  if (cached) return cached;
+
+  let item = null;
   try {
     if (await isRushDBConnected()) {
       const catalog = await getSchemaCatalog();
       if (catalog.labels.has("PROJECT")) {
-        const item = await findRecordById("PROJECT", id);
-        if (item) return item;
+        item = await findRecordById("PROJECT", id);
       }
     }
   } catch (err) {
     console.warn("RushDB getProjectById fallback:", err.message);
   }
 
-  const db = getFileDb();
-  return (db.projects || []).find((p) => p.id === id) || null;
+  if (!item) {
+    const db = getFileDb();
+    item = (db.projects || []).find((p) => p.id === id) || null;
+  }
+
+  if (item) setCached(cacheKey, item);
+  return item;
 }
 
 export async function createProject(data) {
+  clearDbCache("projects");
+  clearDbCache("project:");
   const technologies = Array.isArray(data.technologies)
     ? data.technologies
     : typeof data.technologies === "string"
@@ -682,6 +785,8 @@ export async function createProject(data) {
 }
 
 export async function updateProject(id, updates) {
+  clearDbCache("projects");
+  clearDbCache("project:");
   if (updates.technologies && typeof updates.technologies === "string") {
     updates.technologies = updates.technologies.split(",").map((t) => t.trim()).filter(Boolean);
   }
@@ -709,6 +814,8 @@ export async function updateProject(id, updates) {
 }
 
 export async function deleteProject(id) {
+  clearDbCache("projects");
+  clearDbCache("project:");
   try {
     if (await isRushDBConnected()) {
       await getSchemaCatalog();
@@ -729,6 +836,11 @@ export async function deleteProject(id) {
 // GALLERY CRUD (RushDB Primary + Fallback)
 // ─────────────────────────────────────────────
 export async function getGallery({ category, search } = {}) {
+  const cacheKey = `gallery:${category || "all"}:${search || ""}`;
+  const cached = getCached(cacheKey, 30000);
+  if (cached) return cached;
+
+  let sortedList = null;
   try {
     if (await isRushDBConnected()) {
       const catalog = await getSchemaCatalog();
@@ -740,46 +852,63 @@ export async function getGallery({ category, search } = {}) {
           const s = search.toLowerCase();
           list = list.filter((g) => g.title?.toLowerCase().includes(s) || g.caption?.toLowerCase().includes(s));
         }
-        return list.sort((a, b) => new Date(b.date || b.createdAt) - new Date(a.date || a.createdAt));
+        sortedList = list.sort((a, b) => new Date(b.date || b.createdAt) - new Date(a.date || a.createdAt));
       }
     }
   } catch (err) {
     console.warn("RushDB getGallery fallback:", err.message);
   }
 
-  const db = getFileDb();
-  let list = db.gallery || [];
+  if (!sortedList) {
+    const db = getFileDb();
+    let list = db.gallery || [];
 
-  if (category && category !== "All") {
-    list = list.filter((g) => g.category.toLowerCase() === category.toLowerCase());
+    if (category && category !== "All") {
+      list = list.filter((g) => g.category.toLowerCase() === category.toLowerCase());
+    }
+    if (search) {
+      const s = search.toLowerCase();
+      list = list.filter((g) => g.title.toLowerCase().includes(s) || g.caption.toLowerCase().includes(s));
+    }
+    sortedList = list.sort((a, b) => new Date(b.date || b.createdAt) - new Date(a.date || a.createdAt));
   }
-  if (search) {
-    const s = search.toLowerCase();
-    list = list.filter((g) => g.title.toLowerCase().includes(s) || g.caption.toLowerCase().includes(s));
-  }
-  return list.sort((a, b) => new Date(b.date || b.createdAt) - new Date(a.date || a.createdAt));
+
+  setCached(cacheKey, sortedList);
+  return sortedList;
 }
 
 export const getGalleryItems = getGallery;
 
 export async function getGalleryById(id) {
+  if (!id) return null;
+  const cacheKey = `galleryItem:${id}`;
+  const cached = getCached(cacheKey, 60000);
+  if (cached) return cached;
+
+  let item = null;
   try {
     if (await isRushDBConnected()) {
       const catalog = await getSchemaCatalog();
       if (catalog.labels.has("GALLERY_ITEM")) {
-        const item = await findRecordById("GALLERY_ITEM", id);
-        if (item) return item;
+        item = await findRecordById("GALLERY_ITEM", id);
       }
     }
   } catch (err) {
     console.warn("RushDB getGalleryById fallback:", err.message);
   }
 
-  const db = getFileDb();
-  return (db.gallery || []).find((g) => g.id === id) || null;
+  if (!item) {
+    const db = getFileDb();
+    item = (db.gallery || []).find((g) => g.id === id) || null;
+  }
+
+  if (item) setCached(cacheKey, item);
+  return item;
 }
 
 export async function createGalleryItem(data) {
+  clearDbCache("gallery");
+  clearDbCache("galleryItem:");
   const newItem = {
     id: `gal-${Date.now()}`,
     title: data.title,
@@ -807,6 +936,8 @@ export async function createGalleryItem(data) {
 }
 
 export async function updateGalleryItem(id, updates) {
+  clearDbCache("gallery");
+  clearDbCache("galleryItem:");
   try {
     if (await isRushDBConnected()) {
       await getSchemaCatalog();
@@ -830,6 +961,8 @@ export async function updateGalleryItem(id, updates) {
 }
 
 export async function deleteGalleryItem(id) {
+  clearDbCache("gallery");
+  clearDbCache("galleryItem:");
   try {
     if (await isRushDBConnected()) {
       await getSchemaCatalog();
@@ -1301,23 +1434,35 @@ export async function getMediaItems({ category, search, activeOnly } = {}) {
 }
 
 export async function getMediaItemById(id) {
+  if (!id) return null;
+  const cacheKey = `media:${id}`;
+  const cached = getCached(cacheKey, 60000);
+  if (cached) return cached;
+
+  let item = null;
   try {
     if (await isRushDBConnected()) {
       const catalog = await getSchemaCatalog();
       if (catalog.labels.has("MEDIA_ITEM")) {
-        const item = await findRecordById("MEDIA_ITEM", id);
-        if (item) return item;
+        item = await findRecordById("MEDIA_ITEM", id);
       }
     }
   } catch (err) {
     console.warn("RushDB getMediaItemById fallback:", err.message);
   }
 
-  const db = getFileDb();
-  return (db.mediaItems || []).find((m) => m.id === id) || null;
+  if (!item) {
+    const db = getFileDb();
+    item = (db.mediaItems || []).find((m) => m.id === id) || null;
+  }
+
+  if (item) setCached(cacheKey, item);
+  return item;
 }
 
 export async function createMediaItem(data) {
+  clearDbCache("media");
+  clearDbCache("technexConfig");
   const newItem = {
     id: `media-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
     title: data.title || data.fileName || "Uploaded Asset",
@@ -1354,6 +1499,8 @@ export async function createMediaItem(data) {
 }
 
 export async function updateMediaItem(id, updates) {
+  clearDbCache("media");
+  clearDbCache("technexConfig");
   if (updates.isActive && updates.category && (updates.category === "payment-qr" || updates.category === "website-banner")) {
     await deactivateOtherCategoryMedia(updates.category, id);
   }
@@ -1381,6 +1528,8 @@ export async function updateMediaItem(id, updates) {
 }
 
 export async function deleteMediaItem(id) {
+  clearDbCache("media");
+  clearDbCache("technexConfig");
   try {
     if (await isRushDBConnected()) {
       await getSchemaCatalog();
@@ -1657,7 +1806,11 @@ function deepMerge(target, source) {
 }
 
 export async function getSettings() {
+  const cached = getCached("settings", 30000);
+  if (cached) return cached;
+
   const defaultSettings = getDefaultSettings();
+  let result = null;
 
   try {
     if (await isRushDBConnected()) {
@@ -1665,7 +1818,7 @@ export async function getSettings() {
       if (catalog.labels.has("SETTING")) {
         const list = await findRecords("SETTING", { limit: 1 });
         if (list && list.length > 0) {
-          return deepMerge(defaultSettings, list[0]);
+          result = deepMerge(defaultSettings, list[0]);
         }
       }
     }
@@ -1673,11 +1826,19 @@ export async function getSettings() {
     console.warn("RushDB getSettings fallback:", err.message);
   }
 
-  const db = getFileDb();
-  return deepMerge(defaultSettings, db.settings || {});
+  if (!result) {
+    const db = getFileDb();
+    result = deepMerge(defaultSettings, db.settings || {});
+  }
+
+  setCached("settings", result);
+  return result;
 }
 
 export async function updateSettings(updates) {
+  clearDbCache("settings");
+  clearDbCache("technexConfig");
+
   const current = await getSettings();
   const merged = deepMerge(current, updates);
 
@@ -1698,10 +1859,14 @@ export async function updateSettings(updates) {
   const db = getFileDb();
   db.settings = merged;
   saveFileDb(db);
+  setCached("settings", merged);
   return merged;
 }
 
 export async function getTechnexConfig() {
+  const cached = getCached("technexConfig", 30000);
+  if (cached) return cached;
+
   const settings = await getSettings();
   const technex = { ...settings.technex };
 
@@ -1737,10 +1902,13 @@ export async function getTechnexConfig() {
     technex.whatsappEnabled = settings.technexWhatsappEnabled !== false;
   }
 
+  setCached("technexConfig", technex);
   return technex;
 }
 
 export async function updateTechnexConfig(updates) {
+  clearDbCache("settings");
+  clearDbCache("technexConfig");
   const currentSettings = await getSettings();
   const mergedTechnex = deepMerge(currentSettings.technex, updates);
 

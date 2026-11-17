@@ -22,9 +22,12 @@ function WhatsAppIcon({ className = "w-4 h-4" }) {
   );
 }
 
+let clientContactSettingsCache = null;
+let clientContactSettingsTime = 0;
+
 export default function ContactPage() {
-  const [settings, setSettings] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [settings, setSettings] = useState(clientContactSettingsCache);
+  const [loading, setLoading] = useState(!clientContactSettingsCache);
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -35,10 +38,16 @@ export default function ContactPage() {
   const [toast, setToast] = useState(null);
 
   useEffect(() => {
+    if (clientContactSettingsCache && Date.now() - clientContactSettingsTime < 60000) {
+      setLoading(false);
+      return;
+    }
     fetch("/api/settings")
       .then((res) => res.json())
       .then((json) => {
         if (json.success && json.data) {
+          clientContactSettingsCache = json.data;
+          clientContactSettingsTime = Date.now();
           setSettings(json.data);
         }
       })

@@ -9,7 +9,14 @@ export async function GET(request) {
     const search = searchParams.get("search");
 
     const items = await getGallery({ category, search });
-    return NextResponse.json({ success: true, count: items.length, data: items });
+    return NextResponse.json(
+      { success: true, count: items.length, data: items },
+      {
+        headers: {
+          "Cache-Control": "public, s-maxage=60, stale-while-revalidate=300",
+        },
+      }
+    );
   } catch (err) {
     return NextResponse.json({ error: "Failed to fetch gallery items" }, { status: 500 });
   }

@@ -21,10 +21,17 @@ export async function GET(request) {
       );
     }
 
-    return NextResponse.json({
-      success: true,
-      data: reg,
-    });
+    return NextResponse.json(
+      {
+        success: true,
+        data: reg,
+      },
+      {
+        headers: {
+          "Cache-Control": "no-store, private",
+        },
+      }
+    );
   } catch (err) {
     console.error("GET /api/technex/confirm error:", err);
     return NextResponse.json(

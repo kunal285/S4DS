@@ -10,10 +10,17 @@ export const dynamic = "force-dynamic";
 export async function GET() {
   try {
     const config = await getTechnexConfig();
-    return NextResponse.json({
-      success: true,
-      data: config,
-    });
+    return NextResponse.json(
+      {
+        success: true,
+        data: config,
+      },
+      {
+        headers: {
+          "Cache-Control": "public, s-maxage=30, stale-while-revalidate=120",
+        },
+      }
+    );
   } catch (err) {
     console.error("GET /api/technex/config error:", err);
     return NextResponse.json(

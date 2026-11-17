@@ -47,16 +47,41 @@ export async function getRushDBClient() {
   return null;
 }
 
+let lastConnectionCheck = 0;
+let lastConnectionStatus = false;
+const CONNECTION_TTL = 30 * 1000; // 30s connection cache
+
 /**
  * Check if RushDB engine or cloud is reachable.
+ * Uses in-memory cache and piggybacks on getSchemaCatalog to avoid redundant roundtrips.
  */
-export async function isRushDBConnected() {
+export async function isRushDBConnected(force = false) {
+  const now = Date.now();
+  if (!force && now - lastConnectionCheck < CONNECTION_TTL) {
+    return lastConnectionStatus;
+  }
+
+  // If schema catalog is already fresh, we are definitely connected
+  if (!force && cachedCatalog && now - lastCatalogFetch < CATALOG_TTL) {
+    lastConnectionCheck = now;
+    lastConnectionStatus = true;
+    return true;
+  }
+
   try {
     const client = await getRushDBClient();
-    if (!client) return false;
-    await client.ai.getSchema();
+    if (!client) {
+      lastConnectionCheck = now;
+      lastConnectionStatus = false;
+      return false;
+    }
+    await getSchemaCatalog(force);
+    lastConnectionCheck = now;
+    lastConnectionStatus = true;
     return true;
   } catch (err) {
+    lastConnectionCheck = now;
+    lastConnectionStatus = false;
     return false;
   }
 }

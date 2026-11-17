@@ -6,16 +6,25 @@ import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { Menu, X, Flame, Sparkles, ChevronRight, Lock } from "lucide-react";
 
+let clientSettingsCache = null;
+let clientSettingsTime = 0;
+
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
-  const [settings, setSettings] = useState(null);
+  const [settings, setSettings] = useState(clientSettingsCache);
   const pathname = usePathname();
 
   useEffect(() => {
+    if (clientSettingsCache && Date.now() - clientSettingsTime < 60000) {
+      setSettings(clientSettingsCache);
+      return;
+    }
     fetch("/api/settings")
       .then((res) => res.json())
       .then((json) => {
         if (json.success && json.data) {
+          clientSettingsCache = json.data;
+          clientSettingsTime = Date.now();
           setSettings(json.data);
         }
       })
@@ -62,6 +71,7 @@ export default function Navbar() {
                 src={settings?.logoUrl || "/images/logo.png"}
                 alt={`${settings?.websiteName || "S4DS MITAOE"} Official Logo`}
                 fill
+                sizes="44px"
                 className="object-contain p-0.5"
                 priority
               />

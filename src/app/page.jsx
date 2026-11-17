@@ -226,6 +226,7 @@ export default async function HomePage() {
                   src={technex?.posterUrl || "/images/technex-poster.png"}
                   alt={`${technex?.title || "TECHNEX 2K26"} Official Expo Poster`}
                   fill
+                  sizes="(max-width: 640px) 256px, 288px"
                   className="object-cover"
                 />
               </div>

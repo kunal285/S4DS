@@ -5,10 +5,17 @@ import { validateAdminRequest } from "@/lib/auth";
 export async function GET() {
   try {
     const settings = await getSettings();
-    return NextResponse.json({
-      success: true,
-      data: settings,
-    });
+    return NextResponse.json(
+      {
+        success: true,
+        data: settings,
+      },
+      {
+        headers: {
+          "Cache-Control": "public, s-maxage=60, stale-while-revalidate=300",
+        },
+      }
+    );
   } catch (err) {
     console.error("GET /api/settings error:", err);
     return NextResponse.json(

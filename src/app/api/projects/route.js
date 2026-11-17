@@ -10,7 +10,14 @@ export async function GET(request) {
     const featured = searchParams.get("featured") === "true";
 
     const projects = await getProjects({ domain, search, featuredOnly: featured });
-    return NextResponse.json({ success: true, count: projects.length, data: projects });
+    return NextResponse.json(
+      { success: true, count: projects.length, data: projects },
+      {
+        headers: {
+          "Cache-Control": "public, s-maxage=60, stale-while-revalidate=300",
+        },
+      }
+    );
   } catch (err) {
     return NextResponse.json({ error: "Failed to fetch projects" }, { status: 500 });
   }

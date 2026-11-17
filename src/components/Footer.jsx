@@ -22,6 +22,7 @@ export default async function Footer() {
                   src={settings.logoUrl || "/images/logo.png"}
                   alt={`${settings.websiteName || "S4DS MITAOE"} Logo`}
                   fill
+                  sizes="48px"
                   className="object-contain p-0.5"
                 />
               </div>
