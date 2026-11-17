@@ -168,7 +168,7 @@ function SuccessContent() {
           <Calendar className="w-6 h-6 text-brand-orange shrink-0" />
           <div>
             <span className="text-[10px] uppercase font-bold text-[#B8A99A] block">Expo Date</span>
-            <span className="text-xs sm:text-sm font-bold text-white">{registration.eventDate || "Nov 28, 2026"}</span>
+            <span className="text-xs sm:text-sm font-bold text-white">{registration.eventDate || "Nov 21, 2026"}</span>
           </div>
         </div>
         <div className="p-4 rounded-2xl bg-[#17110D] border border-[rgba(252,135,6,0.25)] flex items-center gap-3 shadow-md">

@@ -327,7 +327,7 @@ export default function TechnexPage() {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
         <div className="lg:col-span-7 space-y-6">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-brand-orange/15 border border-brand-orange/30 text-xs font-bold text-brand-orange uppercase tracking-wider">
-            <Flame className="w-4 h-4 text-brand-yellow" /> Flagship Annual Project Expo
+            <Flame className="w-4 h-4 text-brand-yellow" /> Project Expo
           </div>
 
           <h1 className="text-4xl sm:text-6xl font-black text-brand-white tracking-tight leading-tight">
@@ -342,7 +342,7 @@ export default function TechnexPage() {
             <div className="p-4 rounded-2xl bg-background-card border border-brand-border space-y-1">
               <Calendar className="w-5 h-5 text-brand-orange" />
               <div className="text-xs text-brand-muted">Date</div>
-              <div className="text-sm font-bold text-brand-white">{config?.date || "Nov 28, 2026"}</div>
+              <div className="text-sm font-bold text-brand-white">{config?.date || "Nov 21, 2026"}</div>
             </div>
             <div className="p-4 rounded-2xl bg-background-card border border-brand-border space-y-1">
               <MapPin className="w-5 h-5 text-brand-orange" />

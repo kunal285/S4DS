@@ -278,7 +278,7 @@ export default function AdminTechnexPage() {
                 required
                 value={form.date}
                 onChange={(e) => setForm({ ...form, date: e.target.value })}
-                placeholder="e.g. 2026-11-28 or Nov 28, 2026"
+                placeholder="e.g. 2026-11-21 or Nov 21, 2026"
                 className="w-full px-4 py-2.5 rounded-xl bg-background-elevated border border-brand-border text-sm text-white focus:outline-none focus:border-brand-orange"
               />
             </div>

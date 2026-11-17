@@ -114,7 +114,7 @@ const defaultSettings = {
     tagline: "National Flagship Project Exhibition & Competition",
     description:
       "The premier annual flagship Project Expo and Competition organized by the Society for Data Science (S4DS) Student Chapter, MITAOE. Showcase breakthrough innovations across AI/ML, Web3, IoT, Cloud, and Software Engineering.",
-    date: "2026-11-28",
+    date: "2026-11-21",
     time: "09:00 AM - 05:00 PM IST",
     venue: "MIT Academy of Engineering Campus & Central Auditorium, Alandi, Pune",
     mode: "Offline / In-Person",
@@ -124,7 +124,7 @@ const defaultSettings = {
     minTeamSize: 1,
     maxTeamSize: 4,
     registrationOpen: true,
-    registrationDeadline: "2026-11-25T23:59:59",
+    registrationDeadline: "2026-11-20T23:59:59",
     whatsappUrl: "https://chat.whatsapp.com/KFYW22NYGasBag1RZjnKJl",
     whatsappEnabled: true,
     paymentInstructions:

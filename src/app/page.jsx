@@ -183,7 +183,7 @@ export default async function HomePage() {
                 <div className="p-3.5 rounded-xl bg-background-elevated border border-brand-border">
                   <span className="text-[10px] uppercase font-bold text-brand-muted block">Expo Date</span>
                   <span className="text-sm font-bold text-white flex items-center gap-1.5 mt-0.5">
-                    <Calendar className="w-4 h-4 text-brand-yellow" /> {technex?.date || "Nov 28, 2026"}
+                    <Calendar className="w-4 h-4 text-brand-yellow" /> {technex?.date || "Nov 21, 2026"}
                   </span>
                 </div>
 
