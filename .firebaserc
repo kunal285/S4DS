@@ -1,7 +1,7 @@
 {
   "projects": {
     "default": "s4dsmitaoe",
-    "yes": "s4dsmitaoe"
+    "staging": "s4dsmitaoe"
   },
   "targets": {},
   "etags": {}
