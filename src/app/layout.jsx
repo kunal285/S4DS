@@ -50,12 +50,12 @@ export const metadata = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en" className="dark scroll-smooth">
+    <html lang="en" className="dark scroll-smooth" suppressHydrationWarning>
       <head>
         <link rel="preconnect" href="https://res.cloudinary.com" crossOrigin="anonymous" />
         <link rel="dns-prefetch" href="https://res.cloudinary.com" />
       </head>
-      <body className="min-h-screen flex flex-col bg-background-main text-brand-white antialiased selection:bg-brand-orange selection:text-white">
+      <body className="min-h-screen flex flex-col bg-background-main text-brand-white antialiased selection:bg-brand-orange selection:text-white" suppressHydrationWarning>
         <Navbar />
         <main className="flex-1 pt-20">{children}</main>
         <Footer />

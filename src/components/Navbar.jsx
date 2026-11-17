@@ -50,12 +50,12 @@ export default function Navbar() {
   };
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 glass-nav border-b border-brand-border/60">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-20">
+    <header className="fixed top-0 left-0 right-0 z-50 glass-nav border-b border-brand-border/60" suppressHydrationWarning>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" suppressHydrationWarning>
+        <div className="flex items-center justify-between h-20" suppressHydrationWarning>
           {/* Logo / Chapter Identity */}
           <Link href="/" className="flex items-center gap-3.5 group" suppressHydrationWarning>
-            <div className="relative w-11 h-11 rounded-xl overflow-hidden shadow-md shadow-brand-red/20 group-hover:scale-105 transition-transform duration-200 bg-background-elevated border border-brand-border p-1 flex items-center justify-center" suppressHydrationWarning>
+            <div className="relative w-11 h-11 rounded-xl overflow-hidden shadow-md shadow-brand-red/20 group-hover:scale-105 transition-transform duration-200 bg-background-elevated border border-brand-border p-1 flex items-center justify-center shrink-0" suppressHydrationWarning>
               <Image
                 src={settings?.logoUrl || "/images/logo.png"}
                 alt={`${settings?.websiteName || "S4DS MITAOE"} Official Logo`}
@@ -80,13 +80,14 @@ export default function Navbar() {
           </Link>
 
           {/* Desktop Navigation */}
-          <nav className="hidden lg:flex items-center gap-1">
+          <nav className="hidden lg:flex items-center gap-1" suppressHydrationWarning>
             {navItems.map((item) => {
               const active = isActive(item.href);
               return (
                 <Link
                   key={item.name}
                   href={item.href}
+                  suppressHydrationWarning
                   className={`relative px-3 py-2 text-xs font-semibold rounded-lg transition-all duration-150 flex items-center gap-1.5 ${
                     active
                       ? "text-brand-yellow bg-brand-orange/20 border border-brand-orange/40 shadow-sm"
@@ -95,7 +96,7 @@ export default function Navbar() {
                 >
                   {item.name}
                   {item.badge && (
-                    <span className="px-1.5 py-0.5 text-[9px] font-black uppercase rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
+                    <span className="px-1.5 py-0.5 text-[9px] font-black uppercase rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40" suppressHydrationWarning>
                       {item.badge}
                     </span>
                   )}
@@ -130,8 +131,8 @@ export default function Navbar() {
 
       {/* Mobile Drawer */}
       {isOpen && (
-        <div className="lg:hidden bg-background-secondary/95 backdrop-blur-2xl border-b border-brand-border px-4 pt-3 pb-6 space-y-4 shadow-2xl">
-          <div className="flex flex-col gap-1.5">
+        <div className="lg:hidden bg-background-secondary/95 backdrop-blur-2xl border-b border-brand-border px-4 pt-3 pb-6 space-y-4 shadow-2xl" suppressHydrationWarning>
+          <div className="flex flex-col gap-1.5" suppressHydrationWarning>
             {navItems.map((item) => {
               const active = isActive(item.href);
               return (
@@ -139,6 +140,7 @@ export default function Navbar() {
                   key={item.name}
                   href={item.href}
                   onClick={() => setIsOpen(false)}
+                  suppressHydrationWarning
                   className={`px-4 py-3 rounded-xl text-sm font-semibold flex items-center justify-between transition-colors ${
                     active
                       ? "text-brand-yellow bg-brand-orange/20 border border-brand-orange/40"
@@ -147,7 +149,7 @@ export default function Navbar() {
                 >
                   <span>{item.name}</span>
                   {item.badge ? (
-                    <span className="px-2 py-0.5 text-[9px] font-black uppercase rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
+                    <span className="px-2 py-0.5 text-[9px] font-black uppercase rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40" suppressHydrationWarning>
                       {item.badge}
                     </span>
                   ) : (
