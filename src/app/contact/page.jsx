@@ -26,8 +26,8 @@ let clientContactSettingsCache = null;
 let clientContactSettingsTime = 0;
 
 export default function ContactPage() {
-  const [settings, setSettings] = useState(clientContactSettingsCache);
-  const [loading, setLoading] = useState(!clientContactSettingsCache);
+  const [settings, setSettings] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -39,6 +39,7 @@ export default function ContactPage() {
 
   useEffect(() => {
     if (clientContactSettingsCache && Date.now() - clientContactSettingsTime < 60000) {
+      setSettings(clientContactSettingsCache);
       setLoading(false);
       return;
     }

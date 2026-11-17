@@ -17,13 +17,13 @@ export default async function Footer() {
           {/* Col 1: Brand & Chapter Info */}
           <div className="space-y-4">
             <div className="flex items-center gap-3">
-              <div className="relative w-12 h-12 rounded-xl overflow-hidden shadow-lg shadow-brand-red/20 border border-brand-border bg-background-elevated p-1">
+              <div className="relative w-12 h-12 rounded-xl overflow-hidden shadow-lg shadow-brand-red/20 border border-brand-border bg-background-elevated p-1 flex items-center justify-center">
                 <Image
                   src={settings.logoUrl || "/images/logo.png"}
                   alt={`${settings.websiteName || "S4DS MITAOE"} Logo`}
-                  fill
-                  sizes="48px"
-                  className="object-contain p-0.5"
+                  width={40}
+                  height={40}
+                  className="object-contain"
                 />
               </div>
               <div>

@@ -11,7 +11,7 @@ let clientSettingsTime = 0;
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
-  const [settings, setSettings] = useState(clientSettingsCache);
+  const [settings, setSettings] = useState(null);
   const pathname = usePathname();
 
   useEffect(() => {
@@ -66,13 +66,13 @@ export default function Navbar() {
         <div className="flex items-center justify-between h-20">
           {/* Logo / Chapter Identity */}
           <Link href="/" className="flex items-center gap-3.5 group">
-            <div className="relative w-11 h-11 rounded-xl overflow-hidden shadow-md shadow-brand-red/20 group-hover:scale-105 transition-transform duration-200 bg-background-elevated border border-brand-border p-1">
+            <div className="relative w-11 h-11 rounded-xl overflow-hidden shadow-md shadow-brand-red/20 group-hover:scale-105 transition-transform duration-200 bg-background-elevated border border-brand-border p-1 flex items-center justify-center">
               <Image
                 src={settings?.logoUrl || "/images/logo.png"}
                 alt={`${settings?.websiteName || "S4DS MITAOE"} Official Logo`}
-                fill
-                sizes="44px"
-                className="object-contain p-0.5"
+                width={36}
+                height={36}
+                className="object-contain"
                 priority
               />
             </div>

@@ -46,48 +46,59 @@ let clientTechnexCache = null;
 let clientTechnexTime = 0;
 
 export default function TechnexPage() {
-  const [config, setConfig] = useState(clientTechnexCache);
-  const [loadingConfig, setLoadingConfig] = useState(!clientTechnexCache);
+  const [config, setConfig] = useState(null);
+  const [loadingConfig, setLoadingConfig] = useState(true);
 
-  const [formData, setFormData] = useState(() => {
-    const cfg = clientTechnexCache;
-    const tiers = cfg?.membershipTiers || [];
-    const initialTier = tiers[0] || { name: "S4DS Member", fee: 49 };
-    const initialDomain = cfg?.domains?.[0] || "Artificial Intelligence & ML";
-
-    return {
-      membershipType: initialTier.name,
-      registrationFee: initialTier.fee,
-      teamName: "",
-      projectTitle: "",
-      domain: initialDomain,
-      abstractSummary: "",
-      githubOrDriveUrl: "",
-      leaderName: "",
-      leaderEmail: "",
-      leaderPhone: "",
-      leaderCollege: "MIT Academy of Engineering, Pune",
-      leaderPrn: "",
-      leaderDepartment: "Computer Engineering",
-      leaderYear: "Third Year",
-      leaderDivision: "A",
-      teamMembers: [],
-      utr: "",
-    };
+  const [formData, setFormData] = useState({
+    membershipType: "S4DS Member",
+    registrationFee: 49,
+    teamName: "",
+    projectTitle: "",
+    domain: "Artificial Intelligence & ML",
+    abstractSummary: "",
+    githubOrDriveUrl: "",
+    leaderName: "",
+    leaderEmail: "",
+    leaderPhone: "",
+    leaderCollege: "MIT Academy of Engineering, Pune",
+    leaderPrn: "",
+    leaderDepartment: "Computer Engineering",
+    leaderYear: "Third Year",
+    leaderDivision: "A",
+    teamMembers: [],
+    utr: "",
   });
 
   const [screenshotFile, setScreenshotFile] = useState(null);
   const [previewUrl, setPreviewUrl] = useState("");
-  const [qrCodeUrl, setQrCodeUrl] = useState(() => clientTechnexCache?.activePaymentQrUrl || "");
-  const [qrLoading, setQrLoading] = useState(!clientTechnexCache?.activePaymentQrUrl);
+  const [qrCodeUrl, setQrCodeUrl] = useState("");
+  const [qrLoading, setQrLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [toast, setToast] = useState(null);
 
+  const applyConfig = (cfg) => {
+    setConfig(cfg);
+    const tiers = cfg.membershipTiers || [];
+    const initialTier = tiers[0] || { name: "S4DS Member", fee: 49 };
+    const initialDomain = cfg.domains?.[0] || "Artificial Intelligence & ML";
+
+    setFormData((prev) => ({
+      ...prev,
+      membershipType: prev.membershipType || initialTier.name,
+      registrationFee: prev.registrationFee || initialTier.fee,
+      domain: prev.domain || initialDomain,
+    }));
+
+    if (cfg.activePaymentQrUrl) {
+      setQrCodeUrl(cfg.activePaymentQrUrl);
+    }
+  };
+
   useEffect(() => {
     if (clientTechnexCache && Date.now() - clientTechnexTime < 60000) {
+      applyConfig(clientTechnexCache);
       setLoadingConfig(false);
-      setQrLoading(false);
       return;
     }
     fetchConfig();
@@ -101,22 +112,7 @@ export default function TechnexPage() {
         const cfg = json.data;
         clientTechnexCache = cfg;
         clientTechnexTime = Date.now();
-        setConfig(cfg);
-
-        const tiers = cfg.membershipTiers || [];
-        const initialTier = tiers[0] || { name: "S4DS Member", fee: 49 };
-        const initialDomain = cfg.domains?.[0] || "Artificial Intelligence & ML";
-
-        setFormData((prev) => ({
-          ...prev,
-          membershipType: prev.membershipType || initialTier.name,
-          registrationFee: prev.registrationFee || initialTier.fee,
-          domain: prev.domain || initialDomain,
-        }));
-
-        if (cfg.activePaymentQrUrl) {
-          setQrCodeUrl(cfg.activePaymentQrUrl);
-        }
+        applyConfig(cfg);
       }
     } catch (err) {
       console.warn("Notice: Fetching TECHNEX config:", err);
@@ -860,16 +856,6 @@ export default function TechnexPage() {
                       Accepts Google Pay, PhonePe, Paytm &amp; all UPI apps
                     </span>
                   </div>
-
-                  {/* Direct Mobile Pay Button */}
-                  <a
-                    href={`upi://pay?pa=${encodeURIComponent(config?.upiId || "9172106568@airtel")}&pn=${encodeURIComponent(config?.upiPayeeName || "S4DS MITAOE")}&am=${Number(formData.registrationFee).toFixed(2)}&cu=INR&tn=${encodeURIComponent(`TECHNEX 2K26 - ${formData.membershipType}`)}`}
-                    className="w-full py-2.5 px-3 rounded-xl brand-btn text-white text-xs font-bold flex items-center justify-center gap-1.5 shadow-md transition-transform hover:scale-[1.02] active:scale-95"
-                  >
-                    <Zap className="w-3.5 h-3.5 text-brand-yellow" />
-                    Pay ₹{formData.registrationFee} via UPI App
-                  </a>
-
                   {/* Copy UPI ID Widget */}
                   <div className="w-full flex items-center justify-between p-2 rounded-xl bg-background-card border border-brand-border text-xs">
                     <div className="flex flex-col text-left truncate mr-2">
